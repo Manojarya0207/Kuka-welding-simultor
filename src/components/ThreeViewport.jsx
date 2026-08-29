@@ -42,36 +42,106 @@ function createKukaLogoTexture() {
   ctx.lineWidth = 2;
   ctx.strokeRect(8, 8, canvas.width - 16, canvas.height - 16);
 
-  // 4 Corner Stainless Steel Mounting Screws
-  const boltPositions = [
-    [20, 20],
-    [canvas.width - 20, 20],
-    [20, canvas.height - 20],
-    [canvas.width - 20, canvas.height - 20]
-  ];
-  for (const [bx, by] of boltPositions) {
-    ctx.beginPath();
-    ctx.arc(bx, by, 8, 0, Math.PI * 2);
-    ctx.fillStyle = '#cbd5e1';
-    ctx.fill();
-    ctx.strokeStyle = '#475569';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-
-    // Allen hex socket
-    ctx.beginPath();
-    ctx.arc(bx, by, 3.5, 0, Math.PI * 2);
-    ctx.fillStyle = '#0f172a';
-    ctx.fill();
-  }
-
-  // Heavy Embossed Black KUKA Logotype
+  // Heavy Embossed Black KUKA Logotype with White Outline
   ctx.font = '900 88px "Outfit", "Arial Black", sans-serif';
-  ctx.fillStyle = '#0f172a';
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 6;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.letterSpacing = '7px';
+  ctx.strokeText('KUKA', canvas.width / 2, canvas.height / 2);
+
+  ctx.fillStyle = '#0f172a';
   ctx.fillText('KUKA', canvas.width / 2, canvas.height / 2);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  return texture;
+}
+
+// Analog Pressure Gauge Texture (0 - 250 bar nitrogen accumulator indicator)
+function createPressureGaugeTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+
+  // Stainless outer ring & white face
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(128, 128, 120, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = '#334155';
+  ctx.lineWidth = 8;
+  ctx.stroke();
+
+  // Dial ticks and numbers
+  for (let i = 0; i <= 25; i++) {
+    const angle = Math.PI * 0.75 + (i / 25) * Math.PI * 1.5;
+    const r1 = 110;
+    const r2 = i % 5 === 0 ? 92 : 100;
+    const x1 = 128 + Math.cos(angle) * r1;
+    const y1 = 128 + Math.sin(angle) * r1;
+    const x2 = 128 + Math.cos(angle) * r2;
+    const y2 = 128 + Math.sin(angle) * r2;
+
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.strokeStyle = i >= 20 ? '#dc2626' : '#0f172a';
+    ctx.lineWidth = i % 5 === 0 ? 4 : 2;
+    ctx.stroke();
+  }
+
+  // Label
+  ctx.font = '700 20px "Inter", sans-serif';
+  ctx.fillStyle = '#475569';
+  ctx.textAlign = 'center';
+  ctx.fillText('bar', 128, 175);
+  ctx.font = '800 14px "Inter", sans-serif';
+  ctx.fillText('N2', 128, 90);
+
+  // Pointer Needle (pointing to 160 bar)
+  const needleAngle = Math.PI * 0.75 + (16 / 25) * Math.PI * 1.5;
+  ctx.beginPath();
+  ctx.moveTo(128, 128);
+  ctx.lineTo(128 + Math.cos(needleAngle) * 88, 128 + Math.sin(needleAngle) * 88);
+  ctx.strokeStyle = '#dc2626';
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  // Center rivet
+  ctx.beginPath();
+  ctx.arc(128, 128, 8, 0, Math.PI * 2);
+  ctx.fillStyle = '#0f172a';
+  ctx.fill();
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  return texture;
+}
+
+// Embossed Cast < A2 > Marking Texture
+function createA2CastLabelTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#ea580c';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.font = '900 52px "Outfit", "Arial Black", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  // Cast shadow
+  ctx.fillStyle = '#9a3412';
+  ctx.fillText('< A2 >', canvas.width / 2 + 2, canvas.height / 2 + 2);
+
+  // Highlight
+  ctx.fillStyle = '#ffedd5';
+  ctx.fillText('< A2 >', canvas.width / 2, canvas.height / 2);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.needsUpdate = true;
@@ -297,18 +367,18 @@ export default function ThreeViewport({
     // High-Fidelity PBR Materials
     const kukaOrangeMat = new THREE.MeshStandardMaterial({
       color: 0xea580c,
-      roughness: 0.22,
-      metalness: 0.20
+      roughness: 0.35,
+      metalness: 0.15
     });
     const darkCastMat = new THREE.MeshStandardMaterial({
-      color: 0x1e293b,
-      roughness: 0.52,
-      metalness: 0.70
+      color: 0x14171c,
+      roughness: 0.85,
+      metalness: 0.22
     });
     const machinedSteelMat = new THREE.MeshStandardMaterial({
       color: 0xcfd8dc,
-      roughness: 0.16,
-      metalness: 0.92
+      roughness: 0.18,
+      metalness: 0.90
     });
     const chromeMat = new THREE.MeshStandardMaterial({
       color: 0xf8fafc,
@@ -332,7 +402,22 @@ export default function ThreeViewport({
     });
     const kukaLogoMat = new THREE.MeshStandardMaterial({
       map: kukaTextureRef.current,
-      roughness: 0.22,
+      roughness: 0.25,
+      metalness: 0.15
+    });
+    const accumulatorMat = new THREE.MeshStandardMaterial({
+      color: 0x111317,
+      roughness: 0.32,
+      metalness: 0.45
+    });
+    const gaugeMat = new THREE.MeshStandardMaterial({
+      map: createPressureGaugeTexture(),
+      roughness: 0.15,
+      metalness: 0.30
+    });
+    const a2Mat = new THREE.MeshStandardMaterial({
+      map: createA2CastLabelTexture(),
+      roughness: 0.35,
       metalness: 0.15
     });
     const coolantBlueMat = new THREE.MeshStandardMaterial({
@@ -346,9 +431,9 @@ export default function ThreeViewport({
       metalness: 0.25
     });
     const conduitMat = new THREE.MeshStandardMaterial({
-      color: 0x1e293b,
-      roughness: 0.85,
-      metalness: 0.1
+      color: 0x1a1d21,
+      roughness: 0.88,
+      metalness: 0.08
     });
 
     materialsRef.current = {
@@ -360,6 +445,9 @@ export default function ThreeViewport({
       rubberMat,
       hazardMat,
       kukaLogoMat,
+      accumulatorMat,
+      gaugeMat,
+      a2Mat,
       coolantBlueMat,
       coolantRedMat,
       conduitMat
@@ -370,360 +458,393 @@ export default function ThreeViewport({
     robotArmGroupRef.current = robotArmGroup;
 
     // -------------------------------------------------------------------------
-    // 9.1 FIXED BASE PEDESTAL (Anchor Plates, Bolt Wells, Terminal Enclosure)
+    // 9.1 KUKA KR QUANTEC CAST IRON BASE (Forklift Pockets, Stiffener Rib, Bearing Race)
     // -------------------------------------------------------------------------
     const baseAssembly = new THREE.Group();
+    baseAssembly.rotation.y = Math.PI * 0.38; // Face front forklift pockets directly toward primary ISO camera
     robotArmGroup.add(baseAssembly);
 
-    // Heavy Octagonal Cast Base Flange (Ground mount)
-    const baseOctGeo = new THREE.CylinderGeometry(135, 148, 28, 8);
-    const baseOct = new THREE.Mesh(baseOctGeo, darkCastMat);
-    baseOct.position.y = 14;
-    baseOct.castShadow = true;
-    baseOct.receiveShadow = true;
-    baseAssembly.add(baseOct);
+    // Flared Matte Black Cast Iron Base Skirt
+    const baseSkirt = new THREE.Mesh(new THREE.CylinderGeometry(140, 168, 55, 36), darkCastMat);
+    baseSkirt.position.y = 27.5;
+    baseSkirt.castShadow = true;
+    baseSkirt.receiveShadow = true;
+    baseAssembly.add(baseSkirt);
 
-    // Machined Center Step Collar
-    const baseRingGeo = new THREE.CylinderGeometry(118, 126, 14, 36);
-    const baseRing = new THREE.Mesh(baseRingGeo, machinedSteelMat);
-    baseRing.position.y = 35;
-    baseRing.castShadow = true;
-    baseAssembly.add(baseRing);
+    const baseBottomRim = new THREE.Mesh(new THREE.CylinderGeometry(168, 174, 12, 36), darkCastMat);
+    baseBottomRim.position.y = 6;
+    baseBottomRim.receiveShadow = true;
+    baseAssembly.add(baseBottomRim);
 
-    // 8 Industrial Anchor Bolt Recesses with Chrome M24 Bolts
-    for (let a = 0; a < 8; a++) {
-      const ang = (a / 8) * Math.PI * 2 + Math.PI / 8;
-      const bx = Math.cos(ang) * 115;
-      const bz = Math.sin(ang) * 115;
+    // Turntable Bearing Collar on Top of Base
+    const baseCollar = new THREE.Mesh(new THREE.CylinderGeometry(122, 134, 18, 36), machinedSteelMat);
+    baseCollar.position.y = 64;
+    baseCollar.castShadow = true;
+    baseAssembly.add(baseCollar);
 
-      const washer = new THREE.Mesh(new THREE.CylinderGeometry(12, 12, 3, 16), machinedSteelMat);
-      washer.position.set(bx, 28, bz);
-      baseAssembly.add(washer);
-
-      const bolt = new THREE.Mesh(new THREE.CylinderGeometry(7, 7, 10, 6), chromeMat);
-      bolt.position.set(bx, 33, bz);
-      baseAssembly.add(bolt);
+    // Circle of 16 Chrome Allen Socket Fasteners on Turntable Race
+    for (let c = 0; c < 16; c++) {
+      const cAng = (c / 16) * Math.PI * 2;
+      const cBolt = new THREE.Mesh(new THREE.CylinderGeometry(3.5, 3.5, 5, 12), chromeMat);
+      cBolt.position.set(Math.cos(cAng) * 115, 73, Math.sin(cAng) * 115);
+      baseAssembly.add(cBolt);
     }
 
-    // Rear Electrical Interface Box
-    const termBox = new THREE.Mesh(new THREE.BoxGeometry(55, 42, 38), darkCastMat);
-    termBox.position.set(0, 24, -135);
-    termBox.castShadow = true;
-    baseAssembly.add(termBox);
+    // Two Large Rectangular Forklift Transport Cutouts on Front (Arched Tops)
+    for (const xPocket of [-50, 50]) {
+      // Dark hollow pocket cavity
+      const pocketCavity = new THREE.Mesh(new THREE.BoxGeometry(66, 30, 42), darkCastMat);
+      pocketCavity.position.set(xPocket, 24, 136);
+      baseAssembly.add(pocketCavity);
 
-    const termGland1 = new THREE.Mesh(new THREE.CylinderGeometry(8, 8, 16, 16), brassMat);
-    termGland1.position.set(-14, 12, -154);
-    termGland1.rotation.x = Math.PI / 2;
-    baseAssembly.add(termGland1);
+      // Pocket Arched Top Lip
+      const pocketArch = new THREE.Mesh(new THREE.CylinderGeometry(15, 15, 66, 16), darkCastMat);
+      pocketArch.position.set(xPocket, 39, 136);
+      pocketArch.rotation.z = Math.PI / 2;
+      baseAssembly.add(pocketArch);
 
-    const termGland2 = new THREE.Mesh(new THREE.CylinderGeometry(8, 8, 16, 16), brassMat);
-    termGland2.position.set(14, 12, -154);
-    termGland2.rotation.x = Math.PI / 2;
-    baseAssembly.add(termGland2);
+      // Interior dark void
+      const innerVoid = new THREE.Mesh(
+        new THREE.BoxGeometry(60, 26, 38),
+        new THREE.MeshBasicMaterial({ color: 0x05070a })
+      );
+      innerVoid.position.set(xPocket, 24, 137);
+      baseAssembly.add(innerVoid);
+    }
 
-    // Safety Hazard Decal Strip on Base Front
-    const hazardPlate = new THREE.Mesh(new THREE.BoxGeometry(90, 10, 2), hazardMat);
-    hazardPlate.position.set(0, 14, 140);
-    baseAssembly.add(hazardPlate);
+    // Central Triangular Structural Stiffener Rib Between Pockets
+    const centerRib = new THREE.Mesh(new THREE.BoxGeometry(16, 48, 34), darkCastMat);
+    centerRib.position.set(0, 28, 148);
+    centerRib.castShadow = true;
+    baseAssembly.add(centerRib);
+
+    // Lateral Transport Cutouts on Left & Right
+    for (const xSide of [-138, 138]) {
+      const sidePocket = new THREE.Mesh(new THREE.BoxGeometry(32, 26, 48), darkCastMat);
+      sidePocket.position.set(xSide, 24, 0);
+      baseAssembly.add(sidePocket);
+    }
+
+    // 4 Heavy Corner Anchor Lugs with M30 Hex Bolts
+    for (let a = 0; a < 4; a++) {
+      const ang = (a / 4) * Math.PI * 2 + Math.PI / 4;
+      const ax = Math.cos(ang) * 152;
+      const az = Math.sin(ang) * 152;
+
+      const lugWasher = new THREE.Mesh(new THREE.CylinderGeometry(14, 14, 4, 16), machinedSteelMat);
+      lugWasher.position.set(ax, 12, az);
+      baseAssembly.add(lugWasher);
+
+      const lugBolt = new THREE.Mesh(new THREE.CylinderGeometry(8, 8, 14, 6), chromeMat);
+      lugBolt.position.set(ax, 19, az);
+      baseAssembly.add(lugBolt);
+    }
 
     // -------------------------------------------------------------------------
-    // 9.2 TURNTABLE CAROUSEL (Axis 1 Column, A1 Servo Motor, Asymmetric Fork)
+    // 9.2 TURNTABLE CAROUSEL & REAR DUAL NITROGEN ACCUMULATORS (Axis 1)
     // -------------------------------------------------------------------------
     const carouselGroup = new THREE.Group();
-    carouselGroup.position.y = 42;
+    carouselGroup.position.y = 73;
     robotArmGroup.add(carouselGroup);
 
-    // Contoured Turntable Bell Housing
-    const carLower = new THREE.Mesh(new THREE.CylinderGeometry(98, 112, 60, 40), kukaOrangeMat);
-    carLower.position.y = 30;
+    // Contoured Turntable Bell Housing in KUKA Safety Orange
+    const carLower = new THREE.Mesh(new THREE.CylinderGeometry(98, 116, 56, 40), kukaOrangeMat);
+    carLower.position.y = 28;
     carLower.castShadow = true;
     carouselGroup.add(carLower);
 
-    const carWaist = new THREE.Mesh(new THREE.CylinderGeometry(90, 98, 30, 40), kukaOrangeMat);
-    carWaist.position.y = 75;
+    const carWaist = new THREE.Mesh(new THREE.CylinderGeometry(90, 98, 28, 40), kukaOrangeMat);
+    carWaist.position.y = 70;
     carWaist.castShadow = true;
     carouselGroup.add(carWaist);
 
-    // A1 Servo Drive Motor Housing (Side Mounted)
-    const a1Motor = new THREE.Mesh(new THREE.CylinderGeometry(32, 32, 85, 28), darkCastMat);
-    a1Motor.position.set(0, 45, 82);
-    a1Motor.rotation.x = Math.PI / 2;
-    a1Motor.castShadow = true;
-    carouselGroup.add(a1Motor);
+    // Rear Counterbalance Manifold Block
+    const manifold = new THREE.Mesh(new THREE.BoxGeometry(105, 42, 36), darkCastMat);
+    manifold.position.set(-85, 48, 0);
+    manifold.castShadow = true;
+    carouselGroup.add(manifold);
 
-    // Radial Cooling Fins on A1 Motor
-    for (let f = 0; f < 6; f++) {
-      const fAngle = (f / 6) * Math.PI;
-      const fin = new THREE.Mesh(new THREE.BoxGeometry(68, 70, 2.5), darkCastMat);
-      fin.position.set(0, 45, 82);
-      fin.rotation.z = fAngle;
-      carouselGroup.add(fin);
+    // Dual Nitrogen Accumulator Cylinders (Black semi-gloss)
+    for (const zAcc of [-26, 26]) {
+      const accCyl = new THREE.Mesh(new THREE.CylinderGeometry(18, 18, 92, 24), accumulatorMat);
+      accCyl.position.set(-85, 74, zAcc);
+      accCyl.castShadow = true;
+      carouselGroup.add(accCyl);
+
+      const accDome = new THREE.Mesh(new THREE.SphereGeometry(18, 20, 16, 0, Math.PI * 2, 0, Math.PI / 2), accumulatorMat);
+      accDome.position.set(-85, 120, zAcc);
+      carouselGroup.add(accDome);
+
+      // Hydraulic connecting line into carousel
+      const pipe = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, 52, 16), darkCastMat);
+      pipe.position.set(-58, 46, zAcc);
+      pipe.rotation.z = Math.PI / 2;
+      carouselGroup.add(pipe);
     }
 
-    const a1Cap = new THREE.Mesh(new THREE.CylinderGeometry(26, 26, 12, 28), chromeMat);
-    a1Cap.position.set(0, 45, 128);
-    a1Cap.rotation.x = Math.PI / 2;
-    carouselGroup.add(a1Cap);
+    // Analog Pressure Gauge (White dial face with 0-250 bar scale & red needle)
+    const gaugeBody = new THREE.Mesh(new THREE.CylinderGeometry(13, 13, 8, 24), chromeMat);
+    gaugeBody.position.set(-85, 126, 0);
+    gaugeBody.rotation.x = Math.PI / 2;
+    carouselGroup.add(gaugeBody);
 
-    // Dual-Arm Shoulder Fork (Front Ear & Rear Ear)
-    const forkCentral = new THREE.Mesh(new THREE.BoxGeometry(140, 150, 100), kukaOrangeMat);
-    forkCentral.position.set(70, 155, 0);
+    const gaugeFace = new THREE.Mesh(new THREE.CircleGeometry(12, 24), gaugeMat);
+    gaugeFace.position.set(-85, 126, 4.2);
+    carouselGroup.add(gaugeFace);
+
+    // Asymmetric Shoulder Fork Casting in KUKA Orange
+    const forkCentral = new THREE.Mesh(new THREE.BoxGeometry(135, 155, 96), kukaOrangeMat);
+    forkCentral.position.set(65, 150, 0);
     forkCentral.castShadow = true;
     carouselGroup.add(forkCentral);
 
-    // Front Fork Ear (Reinforced Casting)
-    const earFront = new THREE.Mesh(new THREE.BoxGeometry(115, 145, 32), kukaOrangeMat);
-    earFront.position.set(140, 275, 54);
-    earFront.castShadow = true;
-    carouselGroup.add(earFront);
+    // Right Shoulder Circular Bearing Cover
+    const shoulderCap = new THREE.Mesh(new THREE.CylinderGeometry(52, 52, 18, 36), kukaOrangeMat);
+    shoulderCap.position.set(140, 247, 54);
+    shoulderCap.rotation.x = Math.PI / 2;
+    shoulderCap.castShadow = true;
+    carouselGroup.add(shoulderCap);
 
-    const discFront = new THREE.Mesh(new THREE.CylinderGeometry(60, 60, 14, 36), darkCastMat);
-    discFront.position.set(140, 278, 70);
-    discFront.rotation.x = Math.PI / 2;
-    discFront.castShadow = true;
-    carouselGroup.add(discFront);
+    const shoulderCapCenter = new THREE.Mesh(new THREE.CylinderGeometry(20, 20, 20, 24), darkCastMat);
+    shoulderCapCenter.position.set(140, 247, 56);
+    shoulderCapCenter.rotation.x = Math.PI / 2;
+    carouselGroup.add(shoulderCapCenter);
 
-    // Rear Fork Ear with Circular Journal
-    const earBack = new THREE.Mesh(new THREE.BoxGeometry(115, 145, 32), kukaOrangeMat);
-    earBack.position.set(140, 275, -54);
-    earBack.castShadow = true;
-    carouselGroup.add(earBack);
+    // Embossed < A2 > Directional Marking Plate
+    const a2Plate = new THREE.Mesh(new THREE.BoxGeometry(42, 22, 2), a2Mat);
+    a2Plate.position.set(140, 195, 49);
+    carouselGroup.add(a2Plate);
 
-    const discBack = new THREE.Mesh(new THREE.CylinderGeometry(60, 60, 14, 36), darkCastMat);
-    discBack.position.set(140, 278, -70);
-    discBack.rotation.x = Math.PI / 2;
-    discBack.castShadow = true;
-    carouselGroup.add(discBack);
-
-    // Lifting Eyelet Lug on top of Carousel
+    // Crane Lifting Eyelet Lug on Carousel Top
     const eyelet = new THREE.Mesh(new THREE.TorusGeometry(12, 3.5, 16, 24), chromeMat);
-    eyelet.position.set(45, 235, 0);
+    eyelet.position.set(40, 230, 0);
     eyelet.rotation.y = Math.PI / 2;
     carouselGroup.add(eyelet);
 
     // -------------------------------------------------------------------------
-    // 9.3 AXIS 2 SHOULDER HUB & COUNTERBALANCE
+    // 9.3 AXIS 2 SHOULDER HUB & DYNAMIC COUNTERBALANCE
     // -------------------------------------------------------------------------
     const shoulderHubGroup = new THREE.Group();
     robotArmGroup.add(shoulderHubGroup);
 
-    const shoulderHub = new THREE.Mesh(new THREE.CylinderGeometry(56, 56, 78, 36), darkCastMat);
+    const shoulderHub = new THREE.Mesh(new THREE.CylinderGeometry(54, 54, 80, 36), darkCastMat);
     shoulderHub.rotation.x = Math.PI / 2;
     shoulderHub.castShadow = true;
     shoulderHubGroup.add(shoulderHub);
 
-    // Concentric Circle of 8 Allen Bolts on Shoulder Face
     for (let b = 0; b < 8; b++) {
       const bAng = (b / 8) * Math.PI * 2;
       const shBolt = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, 6, 12), chromeMat);
-      shBolt.position.set(Math.cos(bAng) * 44, Math.sin(bAng) * 44, 40);
+      shBolt.position.set(Math.cos(bAng) * 42, Math.sin(bAng) * 42, 41);
       shBolt.rotation.x = Math.PI / 2;
       shoulderHubGroup.add(shBolt);
     }
 
-    // -------------------------------------------------------------------------
-    // 9.4 UPPER ARM (Link 1: Shoulder A2 to Elbow A3, L1 = 430mm)
-    // -------------------------------------------------------------------------
-    const upperArmGroup = new THREE.Group();
-    robotArmGroup.add(upperArmGroup);
-
-    // Sculpted Tapered Upper Arm Beam
-    const upperArmMesh = new THREE.Mesh(new THREE.BoxGeometry(68, kinematics.l1, 88), kukaOrangeMat);
-    upperArmMesh.castShadow = true;
-    upperArmGroup.add(upperArmMesh);
-
-    // Recessed Side Pockets with Diagonal Stiffener Web (Left and Right)
-    for (const zSide of [-44.5, 44.5]) {
-      const pocket = new THREE.Mesh(new THREE.BoxGeometry(46, kinematics.l1 * 0.72, 3), darkCastMat);
-      pocket.position.set(0, 0, zSide);
-      upperArmGroup.add(pocket);
-
-      const rib = new THREE.Mesh(new THREE.BoxGeometry(10, kinematics.l1 * 0.65, 4), kukaOrangeMat);
-      rib.position.set(0, 0, zSide);
-      rib.rotation.z = Math.PI / 7;
-      upperArmGroup.add(rib);
-
-      // Embossed KUKA Logo Badge Plate on Both Lateral Sides
-      const logoPlate = new THREE.Mesh(new THREE.BoxGeometry(50, 120, 2), kukaLogoMat);
-      logoPlate.position.set(0, 15, zSide + (zSide > 0 ? 2 : -2));
-      logoPlate.rotation.z = Math.PI / 2;
-      upperArmGroup.add(logoPlate);
-    }
-
-    // Cable Dress Pack Support Spring and Saddle on Upper Arm
-    const harnessSaddle = new THREE.Mesh(new THREE.CylinderGeometry(18, 18, 24, 20), darkCastMat);
-    harnessSaddle.position.set(-36, 40, -40);
-    harnessSaddle.rotation.z = Math.PI / 2;
-    upperArmGroup.add(harnessSaddle);
-
-    // Hydro-Pneumatic Counterbalance Cylinder Unit
-    const cbCylinder = new THREE.Mesh(new THREE.CylinderGeometry(16, 16, kinematics.l1 * 0.68, 20), darkCastMat);
+    // Dynamic Counterbalance Cylinder Unit
+    const cbCylinder = new THREE.Mesh(new THREE.CylinderGeometry(17, 17, kinematics.l1 * 0.68, 24), darkCastMat);
     cbCylinder.castShadow = true;
     robotArmGroup.add(cbCylinder);
 
-    const cbRod = new THREE.Mesh(new THREE.CylinderGeometry(9, 9, kinematics.l1 * 0.65, 20), chromeMat);
+    const cbRod = new THREE.Mesh(new THREE.CylinderGeometry(9.5, 9.5, kinematics.l1 * 0.65, 24), chromeMat);
     cbRod.castShadow = true;
     robotArmGroup.add(cbRod);
 
     // -------------------------------------------------------------------------
-    // 9.5 ELBOW JOINT & INDUSTRIAL WIRE FEEDER (Axis 3)
+    // 9.4 UPPER ARM (Link 1: Sweeping Curved Silhouette, L1 = 430mm)
+    // -------------------------------------------------------------------------
+    const upperArmGroup = new THREE.Group();
+    robotArmGroup.add(upperArmGroup);
+
+    // Main Curved Sweeping Cast Beam in KUKA Orange
+    const armLower = new THREE.Mesh(new THREE.CylinderGeometry(40, 48, kinematics.l1 * 0.45, 32), kukaOrangeMat);
+    armLower.position.set(8, -kinematics.l1 * 0.26, 0);
+    armLower.castShadow = true;
+    upperArmGroup.add(armLower);
+
+    const armWaist = new THREE.Mesh(new THREE.CylinderGeometry(34, 40, kinematics.l1 * 0.35, 32), kukaOrangeMat);
+    armWaist.position.set(4, 0, 0);
+    armWaist.castShadow = true;
+    upperArmGroup.add(armWaist);
+
+    const armUpper = new THREE.Mesh(new THREE.CylinderGeometry(44, 34, kinematics.l1 * 0.40, 32), kukaOrangeMat);
+    armUpper.position.set(0, kinematics.l1 * 0.28, 0);
+    armUpper.castShadow = true;
+    upperArmGroup.add(armUpper);
+
+    // Lateral Recessed Stiffener Pockets on Link 1 (Left & Right)
+    for (const zSide of [-38, 38]) {
+      const sidePocket = new THREE.Mesh(new THREE.BoxGeometry(32, kinematics.l1 * 0.68, 3), darkCastMat);
+      sidePocket.position.set(4, 0, zSide);
+      upperArmGroup.add(sidePocket);
+
+      const sideRib = new THREE.Mesh(new THREE.BoxGeometry(8, kinematics.l1 * 0.60, 4), kukaOrangeMat);
+      sideRib.position.set(4, 0, zSide);
+      sideRib.rotation.z = Math.PI / 8;
+      upperArmGroup.add(sideRib);
+    }
+
+    // Lower Cable Dress Pack Saddle Clamp on Link 1
+    const harnessSaddle = new THREE.Mesh(new THREE.CylinderGeometry(16, 16, 20, 20), darkCastMat);
+    harnessSaddle.position.set(-32, -kinematics.l1 * 0.20, -32);
+    harnessSaddle.rotation.z = Math.PI / 2;
+    upperArmGroup.add(harnessSaddle);
+
+    // -------------------------------------------------------------------------
+    // 9.5 ELBOW JOINT & DISTINCTIVE OVER-ARM ARCHED CONDUIT (Axis 3)
     // -------------------------------------------------------------------------
     const elbowGroup = new THREE.Group();
     robotArmGroup.add(elbowGroup);
 
-    const elbowHub = new THREE.Mesh(new THREE.SphereGeometry(52, 32, 32), kukaOrangeMat);
+    const elbowHub = new THREE.Mesh(new THREE.SphereGeometry(50, 32, 32), kukaOrangeMat);
     elbowHub.castShadow = true;
     elbowGroup.add(elbowHub);
 
-    // Planetary Gear Hub Ring
-    const gearRing = new THREE.Mesh(new THREE.CylinderGeometry(54, 54, 38, 36), machinedSteelMat);
+    // Planetary Gear Hub Ring with Bolt Circle
+    const gearRing = new THREE.Mesh(new THREE.CylinderGeometry(52, 52, 36, 36), machinedSteelMat);
     gearRing.rotation.x = Math.PI / 2;
     gearRing.castShadow = true;
     elbowGroup.add(gearRing);
 
-    // A3 Servo Motor with Cooling Jacket
-    const elbowMotor = new THREE.Mesh(new THREE.CylinderGeometry(32, 32, 85, 28), darkCastMat);
-    elbowMotor.position.set(0, 0, 56);
+    for (let g = 0; g < 12; g++) {
+      const gAng = (g / 12) * Math.PI * 2;
+      const gBolt = new THREE.Mesh(new THREE.CylinderGeometry(3.5, 3.5, 5, 12), chromeMat);
+      gBolt.position.set(Math.cos(gAng) * 44, Math.sin(gAng) * 44, 19);
+      gBolt.rotation.x = Math.PI / 2;
+      elbowGroup.add(gBolt);
+    }
+
+    // A3 Servo Motor with Chrome Resolver Cap
+    const elbowMotor = new THREE.Mesh(new THREE.CylinderGeometry(30, 30, 75, 28), darkCastMat);
+    elbowMotor.position.set(0, 0, 52);
     elbowMotor.rotation.x = Math.PI / 2;
     elbowMotor.castShadow = true;
     elbowGroup.add(elbowMotor);
 
-    const elbowCap = new THREE.Mesh(new THREE.CylinderGeometry(25, 25, 12, 28), chromeMat);
-    elbowCap.position.set(0, 0, 100);
+    const elbowCap = new THREE.Mesh(new THREE.CylinderGeometry(24, 24, 10, 28), chromeMat);
+    elbowCap.position.set(0, 0, 92);
     elbowCap.rotation.x = Math.PI / 2;
     elbowGroup.add(elbowCap);
 
-    // Robotic 4-Roll Wire Feeder Assembly (Mounted on Axis 3)
-    const feederGroup = new THREE.Group();
-    elbowGroup.add(feederGroup);
-
-    const feederBracket = new THREE.Mesh(new THREE.BoxGeometry(40, 60, 20), darkCastMat);
-    feederBracket.position.set(-30, 25, -50);
-    feederGroup.add(feederBracket);
-
-    const feederDriveBox = new THREE.Mesh(new THREE.BoxGeometry(50, 75, 75), darkCastMat);
-    feederDriveBox.position.set(-55, 30, -50);
-    feederDriveBox.castShadow = true;
-    feederGroup.add(feederDriveBox);
-
-    // Knurled Wire Pressure Adjustment Knobs
-    const knob1 = new THREE.Mesh(new THREE.CylinderGeometry(7, 7, 14, 16), chromeMat);
-    knob1.position.set(-55, 72, -35);
-    feederGroup.add(knob1);
-
-    const knob2 = new THREE.Mesh(new THREE.CylinderGeometry(7, 7, 14, 16), chromeMat);
-    knob2.position.set(-55, 72, -65);
-    feederGroup.add(knob2);
-
-    // Weld Wire Spool with Copper-Coated Solid Wire
-    const spool = new THREE.Mesh(new THREE.CylinderGeometry(34, 34, 22, 32), brassMat);
-    spool.position.set(-86, 30, -50);
-    spool.rotation.z = Math.PI / 2;
-    spool.castShadow = true;
-    feederGroup.add(spool);
-
-    const spoolCover = new THREE.Mesh(
-      new THREE.CylinderGeometry(38, 38, 26, 32, 1, true),
-      new THREE.MeshStandardMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.45, roughness: 0.1 })
+    // Over-Arm Flexible Arched Conduit Loop (Iconic KUKA Quantec Signature)
+    const overArmLoop = new THREE.Mesh(
+      new THREE.TorusGeometry(46, 6.5, 14, 28, Math.PI * 1.05),
+      conduitMat
     );
-    spoolCover.position.set(-86, 30, -50);
-    spoolCover.rotation.z = Math.PI / 2;
-    feederGroup.add(spoolCover);
+    overArmLoop.position.set(-20, 28, -26);
+    overArmLoop.rotation.z = Math.PI * 0.45;
+    elbowGroup.add(overArmLoop);
+
+    // Silver/White Conduit Saddle Clamps
+    const clamp1 = new THREE.Mesh(new THREE.BoxGeometry(16, 12, 18), chromeMat);
+    clamp1.position.set(-52, 10, -26);
+    elbowGroup.add(clamp1);
+
+    const clamp2 = new THREE.Mesh(new THREE.BoxGeometry(16, 12, 18), chromeMat);
+    clamp2.position.set(15, 58, -26);
+    elbowGroup.add(clamp2);
 
     // -------------------------------------------------------------------------
-    // 9.6 FOREARM (Link 2: Elbow A3 to Wrist A5, L2 = 430mm)
+    // 9.6 FOREARM (Link 2: Tapered Cylindrical Casting with KUKA Branding, L2 = 430mm)
     // -------------------------------------------------------------------------
     const forearmGroup = new THREE.Group();
     robotArmGroup.add(forearmGroup);
 
-    const forearmMaterials = [
-      kukaOrangeMat,
-      kukaOrangeMat,
-      kukaOrangeMat,
-      kukaOrangeMat,
-      kukaLogoMat,
+    // Smooth Tapered Conical Cylinder in KUKA Orange
+    const forearmCylinder = new THREE.Mesh(
+      new THREE.CylinderGeometry(38, 48, kinematics.l2, 36),
       kukaOrangeMat
-    ];
-    const forearmMesh = new THREE.Mesh(new THREE.BoxGeometry(54, kinematics.l2, 74), forearmMaterials);
-    forearmMesh.castShadow = true;
-    forearmGroup.add(forearmMesh);
+    );
+    forearmCylinder.castShadow = true;
+    forearmGroup.add(forearmCylinder);
 
-    // Top Wiring Channel Inspection Cover Plate with Fasteners
-    const inspectCover = new THREE.Mesh(new THREE.BoxGeometry(32, kinematics.l2 * 0.75, 4), darkCastMat);
-    inspectCover.position.set(0, 0, 38);
-    forearmGroup.add(inspectCover);
+    // Bold Black KUKA Logotype Emblem on Forearm
+    const kukaEmblem1 = new THREE.Mesh(new THREE.PlaneGeometry(130, 36), kukaLogoMat);
+    kukaEmblem1.position.set(0, 20, 44);
+    kukaEmblem1.rotation.z = Math.PI / 2;
+    forearmGroup.add(kukaEmblem1);
 
-    for (let sc = -120; sc <= 120; sc += 60) {
-      const screw = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 2, 12), chromeMat);
-      screw.position.set(0, sc, 41);
-      screw.rotation.x = Math.PI / 2;
-      forearmGroup.add(screw);
+    const kukaEmblem2 = new THREE.Mesh(new THREE.PlaneGeometry(130, 36), kukaLogoMat);
+    kukaEmblem2.position.set(0, 20, -44);
+    kukaEmblem2.rotation.y = Math.PI;
+    kukaEmblem2.rotation.z = -Math.PI / 2;
+    forearmGroup.add(kukaEmblem2);
+
+    // Stepped Axis 4 In-Line Gear Ring Collar
+    const a4Collar = new THREE.Mesh(new THREE.CylinderGeometry(42, 42, 24, 32), machinedSteelMat);
+    a4Collar.position.set(0, kinematics.l2 * 0.40, 0);
+    a4Collar.castShadow = true;
+    forearmGroup.add(a4Collar);
+
+    for (let s = 0; s < 10; s++) {
+      const sAng = (s / 10) * Math.PI * 2;
+      const sBolt = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 4, 12), chromeMat);
+      sBolt.position.set(Math.cos(sAng) * 36, kinematics.l2 * 0.40, Math.sin(sAng) * 36);
+      forearmGroup.add(sBolt);
     }
 
-    // Integrated A4 In-Line Roll Motor (Elbow End)
-    const a4Motor = new THREE.Mesh(new THREE.CylinderGeometry(28, 28, 60, 24), darkCastMat);
-    a4Motor.position.set(0, -kinematics.l2 * 0.35, 0);
-    forearmGroup.add(a4Motor);
-
     // -------------------------------------------------------------------------
-    // 9.7 COMPACT TRIPLE-ROLL WRIST (Axes 4, 5, 6)
+    // 9.7 COMPACT IN-LINE TRIPLE-ROLL WRIST (Axes 4, 5, 6)
     // -------------------------------------------------------------------------
-    const wristHub = new THREE.Mesh(new THREE.SphereGeometry(36, 28, 28), kukaOrangeMat);
+    const wristHub = new THREE.Mesh(new THREE.SphereGeometry(34, 28, 28), kukaOrangeMat);
     wristHub.castShadow = true;
     robotArmGroup.add(wristHub);
 
-    // Flexible Protective Bellows Boots (Axis 5)
+    // Protective Rubber Bellows Rings (Axis 5)
     const rubberRings = [];
-    for (let r = 1; r <= 5; r++) {
-      const rubberRing = new THREE.Mesh(new THREE.TorusGeometry(20 - r * 1.5, 4.2, 14, 28), rubberMat);
+    for (let r = 1; r <= 4; r++) {
+      const rubberRing = new THREE.Mesh(new THREE.TorusGeometry(18 - r * 1.5, 4.0, 14, 28), rubberMat);
       rubberRing.castShadow = true;
       robotArmGroup.add(rubberRing);
       rubberRings.push(rubberRing);
     }
 
-    // ISO 9409-1-50 Tool Mounting Flange (Ground Steel Face)
-    const flange = new THREE.Mesh(new THREE.CylinderGeometry(26, 26, 14, 32), chromeMat);
+    // ISO 9409-1-50 Ground Steel Tool Flange
+    const flange = new THREE.Mesh(new THREE.CylinderGeometry(26, 26, 12, 36), chromeMat);
     flange.castShadow = true;
     robotArmGroup.add(flange);
 
+    // Circular ISO Bolt Circle on Tool Flange Face
+    for (let f = 0; f < 6; f++) {
+      const fAng = (f / 6) * Math.PI * 2;
+      const fHole = new THREE.Mesh(
+        new THREE.CylinderGeometry(2.5, 2.5, 3, 12),
+        new THREE.MeshBasicMaterial({ color: 0x0f172a })
+      );
+      fHole.position.set(Math.cos(fAng) * 18, 6, Math.sin(fAng) * 18);
+      flange.add(fHole);
+    }
+
     // -------------------------------------------------------------------------
-    // 9.8 ROBOTIC WELDING TORCH (Fronius/Binzel Robacta Style with Collision Sensor)
+    // 9.8 ROBOTIC WELDING TORCH & SENSORS
     // -------------------------------------------------------------------------
-    // Pneumatic Safety Collision Sensor (Shock Sensor)
     const shockSensor = new THREE.Mesh(new THREE.CylinderGeometry(22, 24, 18, 6), darkCastMat);
     shockSensor.castShadow = true;
     robotArmGroup.add(shockSensor);
 
-    // Insulated Clamp Collar
     const torchClamp = new THREE.Mesh(new THREE.CylinderGeometry(16, 18, 16, 20), darkCastMat);
     torchClamp.castShadow = true;
     robotArmGroup.add(torchClamp);
 
-    // Swan-Neck Gooseneck Robotic Torch Body (22° Curve)
     const torch = new THREE.Mesh(new THREE.CylinderGeometry(8, 11, 65, 20), darkCastMat);
     torch.castShadow = true;
     robotArmGroup.add(torch);
 
-    // Water Cooling Braided Hoses (Blue Supply & Red Return)
     const hoseBlue = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.2, 60, 12), coolantBlueMat);
     robotArmGroup.add(hoseBlue);
 
     const hoseRed = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.2, 60, 12), coolantRedMat);
     robotArmGroup.add(hoseRed);
 
-    // Heavy Brass/Copper Gas Cup Nozzle
     const nozzle = new THREE.Mesh(new THREE.ConeGeometry(10, 26, 24), brassMat);
     nozzle.castShadow = true;
     robotArmGroup.add(nozzle);
 
-    // Heavy Copper Contact Tip with Protruding Weld Wire
     const tip = new THREE.Mesh(new THREE.CylinderGeometry(3.5, 3.5, 14, 16), brassMat);
     robotArmGroup.add(tip);
 
     const wireStickout = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 14, 8), chromeMat);
     robotArmGroup.add(wireStickout);
 
-    // Corrugated Cable Dress Pack Conduit Segment (Forearm to Torch)
     const dressPackSegments = [];
     for (let dp = 0; dp < 8; dp++) {
       const dpRing = new THREE.Mesh(new THREE.TorusGeometry(12, 3.5, 10, 20), conduitMat);
@@ -738,9 +859,6 @@ export default function ThreeViewport({
       cbCylinder,
       cbRod,
       elbowGroup,
-      elbowMotor,
-      elbowCap,
-      feederGroup,
       forearmGroup,
       wristHub,
       rubberRings,
@@ -758,7 +876,7 @@ export default function ThreeViewport({
     };
 
     // -------------------------------------------------------------------------
-    // 9.9 HIGH-FIDELITY GHOST ROBOT (COMMAND TARGET PREVIEW)
+    // 9.9 MATCHING GHOST TARGET PREVIEW DIGITAL TWIN
     // -------------------------------------------------------------------------
     const ghostMat = new THREE.MeshStandardMaterial({
       color: 0x0284c7,
@@ -774,27 +892,27 @@ export default function ThreeViewport({
     scene.add(ghostArmGroup);
     ghostGroupRef.current = ghostArmGroup;
 
-    const ghostCarousel = new THREE.Mesh(new THREE.CylinderGeometry(98, 112, 90, 24), ghostMat);
-    ghostCarousel.position.y = 85;
+    const ghostCarousel = new THREE.Mesh(new THREE.CylinderGeometry(98, 116, 90, 24), ghostMat);
+    ghostCarousel.position.y = 73;
     ghostArmGroup.add(ghostCarousel);
 
-    const ghostShoulder = new THREE.Mesh(new THREE.CylinderGeometry(56, 56, 78, 24), ghostMat);
+    const ghostShoulder = new THREE.Mesh(new THREE.CylinderGeometry(54, 54, 80, 24), ghostMat);
     ghostShoulder.rotation.x = Math.PI / 2;
     ghostArmGroup.add(ghostShoulder);
 
-    const ghostUpperArm = new THREE.Mesh(new THREE.BoxGeometry(68, kinematics.l1, 88), ghostMat);
+    const ghostUpperArm = new THREE.Mesh(new THREE.CylinderGeometry(40, 48, kinematics.l1, 24), ghostMat);
     ghostArmGroup.add(ghostUpperArm);
 
-    const ghostElbow = new THREE.Mesh(new THREE.SphereGeometry(52, 20, 20), ghostMat);
+    const ghostElbow = new THREE.Mesh(new THREE.SphereGeometry(50, 20, 20), ghostMat);
     ghostArmGroup.add(ghostElbow);
 
-    const ghostForearm = new THREE.Mesh(new THREE.BoxGeometry(54, kinematics.l2, 74), ghostMat);
+    const ghostForearm = new THREE.Mesh(new THREE.CylinderGeometry(38, 48, kinematics.l2, 24), ghostMat);
     ghostArmGroup.add(ghostForearm);
 
-    const ghostWrist = new THREE.Mesh(new THREE.SphereGeometry(36, 18, 18), ghostMat);
+    const ghostWrist = new THREE.Mesh(new THREE.SphereGeometry(34, 18, 18), ghostMat);
     ghostArmGroup.add(ghostWrist);
 
-    const ghostFlange = new THREE.Mesh(new THREE.CylinderGeometry(26, 26, 14, 18), ghostMat);
+    const ghostFlange = new THREE.Mesh(new THREE.CylinderGeometry(26, 26, 12, 18), ghostMat);
     ghostArmGroup.add(ghostFlange);
 
     const ghostTorch = new THREE.Mesh(new THREE.CylinderGeometry(8, 11, 65, 16), ghostMat);
@@ -1289,7 +1407,7 @@ export default function ThreeViewport({
       <div className="viewport-hud-top">
         <span className="hud-badge-title">
           <span className="pulse-dot"></span>
-          KUKA KR CYBERTECH 3D DIGITAL TWIN
+          KUKA KR QUANTEC 3D DIGITAL TWIN
         </span>
         <span className="hud-sep">|</span>
         <span className="hud-coords">

@@ -6,6 +6,7 @@ import ToastNotificationStack from './components/ToastNotificationStack';
 import CommandHistoryTable from './components/CommandHistoryTable';
 import LiveSafetyModal from './components/LiveSafetyModal';
 import TeachPendant from './components/TeachPendant';
+import NotificationsArchiveTable from './components/NotificationsArchiveTable';
 import { METALS, WORKPIECE_SHAPES } from './materials';
 import {
   Activity,
@@ -101,26 +102,23 @@ export default function App() {
   };
 
   // ---------------------------------------------------------------------------
-  // Toast Management (Auto-dismiss after 4.5 seconds)
+  // Toast Management (Dismissed via ToastCard hover-pause timers or close button)
   // ---------------------------------------------------------------------------
   const addToast = useCallback((notif) => {
     const toastItem = {
-      id: notif.id || notif.event_id || `toast-${Date.now()}`,
+      id: notif.id || notif.event_id || `toast-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
       title: notif.title,
       message: notif.message,
       severity: notif.severity || 'INFO',
       command_id: notif.command_id,
       payload: notif.payload || {},
+      timestamp: notif.timestamp || notif.created_at || new Date().toISOString(),
     };
 
     setToasts((prev) => [toastItem, ...prev.slice(0, 4)]);
 
-    setTimeout(() => {
-      setToasts((current) => current.filter((t) => t.id !== toastItem.id));
-    }, 4500);
-
     if (notif.severity === 'SUCCESS') playChime(640, 0.25);
-    else if (notif.severity === 'WARNING' || notif.severity === 'ERROR') playChime(320, 0.35);
+    else if (notif.severity === 'WARNING' || notif.severity === 'ERROR' || notif.severity === 'CRITICAL') playChime(320, 0.35);
   }, [soundEnabled]);
 
   const dismissToast = (id) => {
@@ -401,6 +399,82 @@ export default function App() {
     } catch (e) {}
   };
 
+  const handleDeleteNotification = (notifId) => {
+    setNotifications((prev) => {
+      const removed = prev.find((n) => n.id === notifId || n.event_id === notifId);
+      if (removed && !removed.read) {
+        setUnreadCount((c) => Math.max(0, c - 1));
+      }
+      return prev.filter((n) => n.id !== notifId && n.event_id !== notifId);
+    });
+  };
+
+  const handleSimulateAlert = () => {
+    const samples = [
+      {
+        severity: 'SUCCESS',
+        title: 'Saved successfully',
+        message: '',
+        command_id: '',
+        type: 'ROBOT_SAVE',
+      },
+      {
+        severity: 'INFO',
+        title: 'Request in progress',
+        message: "We're processing your request. You'll be notified once it's done.",
+        command_id: '',
+        type: 'COMMAND_IN_PROGRESS',
+      },
+      {
+        severity: 'ERROR',
+        title: 'Something went wrong',
+        message: "We couldn't complete your request. Check your connection and try again.",
+        command_id: '',
+        type: 'ROBOT_ERROR',
+      },
+      {
+        severity: 'SUCCESS',
+        title: 'Robot Movement Completed',
+        message: 'A1 reached 30.00°',
+        command_id: 'CMD-000001',
+        type: 'COMMAND_COMPLETED',
+        payload: { duration: 1.2 }
+      },
+      {
+        severity: 'WARNING',
+        title: 'Robot Connection Unstable',
+        message: 'Communication with KUKA KR C5 is unstable.',
+        type: 'CONNECTION_WARNING',
+      },
+      {
+        severity: 'CRITICAL',
+        title: 'Robot Safety State Changed',
+        message: 'Live robot control has been disabled.',
+        type: 'SAFETY_STATE_CHANGED',
+      }
+    ];
+    // Pick next sample sequentially or randomly
+    const idx = (window._kukaSimIndex = ((window._kukaSimIndex || 0) + 1) % samples.length);
+    const sample = samples[idx];
+    const notifItem = {
+      id: `notif-sim-${Date.now()}`,
+      event_id: `EVT-${Date.now()}`,
+      title: sample.title,
+      message: sample.message,
+      severity: sample.severity,
+      command_id: sample.command_id,
+      type: sample.type,
+      event: sample.type,
+      read: false,
+      timestamp: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      payload: sample.payload,
+    };
+    setNotifications((prev) => [notifItem, ...prev]);
+    setUnreadCount((c) => c + 1);
+    addToast(notifItem);
+  };
+
   // Convert joint angles for ThreeViewport format { A1, A2, A3, A4, A5, A6 }
   const viewportActualAngles = {
     A1: actualJoints.a1 ?? 0,
@@ -449,7 +523,7 @@ export default function App() {
               onChange={(e) => setRobotId(e.target.value)}
               className="robot-select-input"
             >
-              <option value="KUKA-01">KUKA-01 (KR CYBERTECH)</option>
+              <option value="KUKA-01">KUKA-01 (KR QUANTEC)</option>
               <option value="KUKA-02">KUKA-02 (Welding Cell B)</option>
             </select>
           </div>
@@ -491,12 +565,18 @@ export default function App() {
             {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
           </button>
 
-          {/* Notification Bell with Badge & Drawer */}
+          {/* Notification Bell with Badge & Flyout Popover */}
           <NotificationBell
             notifications={notifications}
             unreadCount={unreadCount}
             onMarkRead={handleMarkNotifRead}
             onMarkAllRead={handleMarkAllRead}
+            onDeleteNotification={handleDeleteNotification}
+            onSimulateAlert={handleSimulateAlert}
+            onOpenArchive={() => {
+              setActiveBottomTab('notifications');
+              fetchNotifications();
+            }}
           />
 
           {/* Emergency Stop Button */}
@@ -603,37 +683,14 @@ export default function App() {
           )}
 
           {activeBottomTab === 'notifications' && (
-            <div className="notifications-archive-panel">
-              <div className="archive-header">
-                <span className="text-sm font-semibold text-slate-800">
-                  All System Notifications ({notifications.length} logged in database)
-                </span>
-                {unreadCount > 0 && (
-                  <button onClick={handleMarkAllRead} className="btn-secondary text-xs">
-                    Mark all read
-                  </button>
-                )}
-              </div>
-              <div className="archive-grid">
-                {notifications.map((n) => (
-                  <div key={n.id || n.event_id} className={`archive-card notif-${(n.severity || 'INFO').toLowerCase()}`}>
-                    <div className="archive-card-top">
-                      <span className="archive-badge">{n.type}</span>
-                      <span className="archive-time text-xs text-slate-500">
-                        {n.created_at ? new Date(n.created_at).toLocaleTimeString() : ''}
-                      </span>
-                    </div>
-                    <h4 className="archive-title">{n.title}</h4>
-                    <p className="archive-message">{n.message}</p>
-                    {n.command_id && (
-                      <span className="archive-cmd text-xs font-mono text-slate-600">
-                        ID: {n.command_id}
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
+            <NotificationsArchiveTable
+              notifications={notifications}
+              unreadCount={unreadCount}
+              onMarkRead={handleMarkNotifRead}
+              onMarkAllRead={handleMarkAllRead}
+              onDeleteNotification={handleDeleteNotification}
+              onRefresh={fetchNotifications}
+            />
           )}
 
           {activeBottomTab === 'telemetry' && (
