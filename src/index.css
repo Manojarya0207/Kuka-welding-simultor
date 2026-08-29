@@ -15,8 +15,8 @@
   --border-color: rgba(15, 23, 42, 0.12);
   --border-glow: rgba(2, 132, 199, 0.25);
   
-  --kuka-orange: #ff5500;
-  --kuka-orange-glow: rgba(255, 85, 0, 0.3);
+  --kuka-orange: #f97316;
+  --kuka-orange-glow: rgba(249, 115, 22, 0.25);
   --accent-cyan: #0284c7;
   --accent-blue: #0284c7;
   --accent-emerald: #16a34a;
@@ -651,23 +651,29 @@ html, body {
 .btn-auto-cycle {
   flex: 1;
   padding: 12px;
-  background: linear-gradient(135deg, var(--kuka-orange), #f59e0b);
-  color: white;
+  background: var(--kuka-orange);
+  color: #ffffff;
   border: none;
   border-radius: 10px;
   font-weight: 800;
-  font-size: 11px;
+  font-size: 11.5px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   cursor: pointer;
-  box-shadow: 0 0 16px var(--kuka-orange-glow);
+  box-shadow: 0 0 14px var(--kuka-orange-glow);
   transition: all 0.15s ease;
 }
 
+.btn-auto-cycle:hover:not(:disabled) {
+  background: #fb8c3c;
+  box-shadow: 0 0 18px rgba(249, 115, 22, 0.45);
+}
+
 .btn-auto-cycle.running {
-  background: #d97706;
+  background: #f59e0b;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.5);
 }
 
 .btn-auto-cycle:disabled {
@@ -678,11 +684,11 @@ html, body {
 .btn-estop {
   padding: 12px 18px;
   background: #dc2626;
-  color: white;
+  color: #ffffff;
   border: none;
   border-radius: 10px;
   font-weight: 900;
-  font-size: 11px;
+  font-size: 11.5px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -694,4 +700,122 @@ html, body {
 
 .btn-estop:hover {
   background: #ef4444;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+}
+
+/* ==========================================================================
+   VIEWPORT BOTTOM SAFETY GRILL CONTROLS & STATUS BOXES
+   ========================================================================== */
+.viewport-bottom-bar {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.safety-grill-toggle {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-main);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(12px);
+  transition: all 0.15s ease;
+}
+
+.safety-grill-toggle:hover {
+  border-color: #0284c7;
+  color: #0284c7;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px rgba(2, 132, 199, 0.2);
+}
+
+.safety-grill-toggle.active {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(240, 253, 244, 0.95);
+  color: #15803d;
+}
+
+.safety-status-boxes {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-box-indicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(12px);
+}
+
+.status-box-indicator .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.status-box-indicator.green {
+  border-color: rgba(22, 163, 74, 0.4);
+  color: #15803d;
+  background: rgba(240, 253, 244, 0.9);
+}
+
+.status-box-indicator.green .dot {
+  background: #16a34a;
+  box-shadow: 0 0 6px #16a34a;
+}
+
+.status-box-indicator.amber {
+  border-color: rgba(217, 119, 6, 0.4);
+  color: #b45309;
+  background: rgba(254, 243, 199, 0.9);
+}
+
+.status-box-indicator.amber .dot {
+  background: #f59e0b;
+  box-shadow: 0 0 6px #f59e0b;
+}
+
+.status-box-indicator.red {
+  border-color: rgba(220, 38, 38, 0.4);
+  color: #b91c1c;
+  background: rgba(254, 226, 226, 0.9);
+}
+
+.status-box-indicator.red .dot {
+  background: #dc2626;
+  box-shadow: 0 0 6px #dc2626;
+}
+
+.status-box-indicator.gray {
+  border-color: rgba(100, 116, 139, 0.3);
+  color: #64748b;
+  background: rgba(241, 245, 249, 0.9);
+}
+
+.status-box-indicator.gray .dot {
+  background: #94a3b8;
 }

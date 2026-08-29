@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { Flame } from 'lucide-react';
+import { Flame, Shield, ShieldCheck, ShieldAlert, Sparkles, Eye, Info } from 'lucide-react';
 import { METALS, WORKPIECE_SHAPES } from '../materials';
 import { RobotKinematics } from '../kinematics';
 
@@ -13,7 +13,7 @@ function createKukaLogoTexture() {
   canvas.height = 128;
   const ctx = canvas.getContext('2d');
 
-  ctx.fillStyle = '#ff5500';
+  ctx.fillStyle = '#f97316';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   ctx.font = '900 86px "Outfit", "Arial Black", sans-serif';
@@ -24,6 +24,35 @@ function createKukaLogoTexture() {
   ctx.fillText('KUKA', canvas.width / 2, canvas.height / 2);
 
   const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  return texture;
+}
+
+// Helper to create Hazard Warning Canvas Texture
+function createHazardTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = '#0f172a';
+  for (let i = -64; i < 256 + 64; i += 32) {
+    ctx.beginPath();
+    ctx.moveTo(i, 0);
+    ctx.lineTo(i + 24, 0);
+    ctx.lineTo(i - 8, 64);
+    ctx.lineTo(i - 32, 64);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(4, 1);
   texture.needsUpdate = true;
   return texture;
 }
@@ -55,6 +84,13 @@ export default function ThreeViewport({
   const floorMeshRef = useRef(null);
   const materialsRef = useRef({});
   const robotPartsRef = useRef({});
+  const safetyGrillGroupRef = useRef(null);
+  const andonLightsRef = useRef({});
+
+  // Safety Glass State
+  const [showSafetyGrill, setShowSafetyGrill] = useState(true);
+  const showSafetyGrillRef = useRef(showSafetyGrill);
+  showSafetyGrillRef.current = showSafetyGrill;
 
   const metalData = METALS[selectedMetalKey] || METALS.carbon_steel;
   const shapeData = WORKPIECE_SHAPES[selectedShapeKey] || WORKPIECE_SHAPES.circle_pipe;
@@ -67,7 +103,7 @@ export default function ThreeViewport({
     const width = container.clientWidth || window.innerWidth - 460;
     const height = container.clientHeight || window.innerHeight - 56;
 
-    // 1. Scene & Background (Permanent Industrial Light Studio)
+    // 1. Scene & Background
     const scene = new THREE.Scene();
     const bgCol = new THREE.Color(0xf1f5f9);
     scene.background = bgCol;
@@ -172,13 +208,163 @@ export default function ThreeViewport({
     }
     scene.add(tableGroup);
 
-    // 6. Dynamic Workpiece Group (at X=620, Base Y=280)
+    // -------------------------------------------------------------------------
+    // 6. INDUSTRIAL PROTECTIVE SAFETY GLASS ENCLOSURE (SURROUNDING WORKING PLATFORM)
+    // -------------------------------------------------------------------------
+    const safetyGrillGroup = new THREE.Group();
+    const hazardTex = createHazardTexture();
+    const hazardMat = new THREE.MeshBasicMaterial({ map: hazardTex });
+
+    const postYellowMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.35, metalness: 0.6 });
+    const frameDarkMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.35, metalness: 0.75 });
+    const clampChromeMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.15, metalness: 0.9 });
+
+    // Premium Optical Safety Glass Material
+    const safetyGlassMat = new THREE.MeshPhysicalMaterial({
+      color: 0x67e8f9,
+      transparent: true,
+      opacity: 0.38,
+      roughness: 0.05,
+      metalness: 0.15,
+      transmission: 0.88,
+      thickness: 5,
+      reflectivity: 0.8,
+      side: THREE.DoubleSide
+    });
+
+    // Perimeter Guard Posts surrounding Robot (0,0) & Table (620,0)
+    // Cell Bounds: X from -320 to 1080, Z from -650 to 650, Height = 650mm
+    const postGeo = new THREE.BoxGeometry(22, 650, 22);
+    const postFootGeo = new THREE.BoxGeometry(38, 25, 38);
+
+    const postLocations = [
+      [-320, -650], [380, -650], [1080, -650], // Back Row
+      [-320, 650], [380, 650], [1080, 650],   // Front Row
+      [-320, 0], [1080, 0]                     // Side Mid Posts
+    ];
+
+    postLocations.forEach(([px, pz]) => {
+      const post = new THREE.Mesh(postGeo, postYellowMat);
+      post.position.set(px, 325, pz);
+      post.castShadow = true;
+      post.userData = { isSafetyGlass: true };
+      safetyGrillGroup.add(post);
+
+      const foot = new THREE.Mesh(postFootGeo, hazardMat);
+      foot.position.set(px, 12.5, pz);
+      foot.userData = { isSafetyGlass: true };
+      safetyGrillGroup.add(foot);
+
+      const cap = new THREE.Mesh(new THREE.CylinderGeometry(14, 14, 8, 16), frameDarkMat);
+      cap.position.set(px, 654, pz);
+      cap.userData = { isSafetyGlass: true };
+      safetyGrillGroup.add(cap);
+    });
+
+    // Transparent Safety Glass Panels between Posts
+    const addGlassPanel = (x1, z1, x2, z2) => {
+      const dx = x2 - x1;
+      const dz = z2 - z1;
+      const len = Math.sqrt(dx * dx + dz * dz);
+      const angle = Math.atan2(dz, dx);
+      const midX = (x1 + x2) / 2;
+      const midZ = (z1 + z2) / 2;
+
+      const panelGroup = new THREE.Group();
+      panelGroup.position.set(midX, 325, midZ);
+      panelGroup.rotation.y = -angle;
+
+      // Top & Bottom Aluminum Rails
+      const railGeo = new THREE.BoxGeometry(len, 16, 16);
+      const topRail = new THREE.Mesh(railGeo, frameDarkMat);
+      topRail.position.y = 280;
+      topRail.castShadow = true;
+      topRail.userData = { isSafetyGlass: true };
+      panelGroup.add(topRail);
+
+      const botRail = new THREE.Mesh(railGeo, frameDarkMat);
+      botRail.position.y = -280;
+      botRail.userData = { isSafetyGlass: true };
+      panelGroup.add(botRail);
+
+      // Glass Sheet (Transparent Safety Screen)
+      const glassGeo = new THREE.BoxGeometry(len - 24, 540, 5);
+      const glassMesh = new THREE.Mesh(glassGeo, safetyGlassMat);
+      glassMesh.castShadow = true;
+      glassMesh.receiveShadow = true;
+      glassMesh.userData = { isSafetyGlass: true };
+      panelGroup.add(glassMesh);
+
+      // Mounting Clamps on top & bottom
+      for (const cx of [-len * 0.35, len * 0.35]) {
+        const clampTop = new THREE.Mesh(new THREE.BoxGeometry(18, 22, 14), clampChromeMat);
+        clampTop.position.set(cx, 268, 0);
+        clampTop.userData = { isSafetyGlass: true };
+        panelGroup.add(clampTop);
+
+        const clampBot = new THREE.Mesh(new THREE.BoxGeometry(18, 22, 14), clampChromeMat);
+        clampBot.position.set(cx, -268, 0);
+        clampBot.userData = { isSafetyGlass: true };
+        panelGroup.add(clampBot);
+      }
+
+      panelGroup.userData = { isSafetyGlass: true };
+      safetyGrillGroup.add(panelGroup);
+    };
+
+    // Back Glass Panels
+    addGlassPanel(-320, -650, 380, -650);
+    addGlassPanel(380, -650, 1080, -650);
+
+    // Left Glass Panels
+    addGlassPanel(-320, -650, -320, 0);
+    addGlassPanel(-320, 0, -320, 650);
+
+    // Right Glass Panels
+    addGlassPanel(1080, -650, 1080, 0);
+    addGlassPanel(1080, 0, 1080, 650);
+
+    // Front Safety Demarcation Floor Stripe
+    const safetyFloorStripe = new THREE.Mesh(new THREE.PlaneGeometry(1420, 35), hazardMat);
+    safetyFloorStripe.rotation.x = -Math.PI / 2;
+    safetyFloorStripe.position.set(380, 1, 650);
+    safetyFloorStripe.userData = { isSafetyGlass: true };
+    safetyGrillGroup.add(safetyFloorStripe);
+
+    // 3-Stage Andon Light Tower (Corner Post at [1080, 650])
+    const andonPole = new THREE.Mesh(new THREE.CylinderGeometry(5, 5, 120, 16), frameDarkMat);
+    andonPole.position.set(1080, 710, 650);
+    andonPole.userData = { isSafetyGlass: true };
+    safetyGrillGroup.add(andonPole);
+
+    const redLight = new THREE.Mesh(new THREE.CylinderGeometry(12, 12, 20, 18), new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0xef4444, emissiveIntensity: 0.2 }));
+    redLight.position.set(1080, 810, 650);
+    redLight.userData = { isSafetyGlass: true };
+    safetyGrillGroup.add(redLight);
+
+    const amberLight = new THREE.Mesh(new THREE.CylinderGeometry(12, 12, 20, 18), new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0xf59e0b, emissiveIntensity: 0.2 }));
+    amberLight.position.set(1080, 785, 650);
+    amberLight.userData = { isSafetyGlass: true };
+    safetyGrillGroup.add(amberLight);
+
+    const greenLight = new THREE.Mesh(new THREE.CylinderGeometry(12, 12, 20, 18), new THREE.MeshStandardMaterial({ color: 0x10b981, emissive: 0x10b981, emissiveIntensity: 0.8 }));
+    greenLight.position.set(1080, 760, 650);
+    greenLight.userData = { isSafetyGlass: true };
+    safetyGrillGroup.add(greenLight);
+
+    andonLightsRef.current = { red: redLight, amber: amberLight, green: greenLight };
+
+    safetyGrillGroup.userData = { isSafetyGlass: true };
+    scene.add(safetyGrillGroup);
+    safetyGrillGroupRef.current = safetyGrillGroup;
+
+    // 7. Dynamic Workpiece Group (at X=620, Base Y=280)
     const wpGroup = new THREE.Group();
     wpGroup.position.set(620, 280, 0);
     scene.add(wpGroup);
     wpGroupRef.current = wpGroup;
 
-    // 7. Weld Beads Group & Sparks Group
+    // 8. Weld Beads Group & Sparks Group
     const weldBeadsGroup = new THREE.Group();
     scene.add(weldBeadsGroup);
     weldBeadsGroupRef.current = weldBeadsGroup;
@@ -187,7 +373,7 @@ export default function ThreeViewport({
     scene.add(sparksGroup);
     sparksGroupRef.current = sparksGroup;
 
-    // 8. Arc Point Light & Glow Mesh
+    // 9. Arc Point Light & Glow Mesh
     const arcLight = new THREE.PointLight(new THREE.Color(metalData.arcGlow), 0, 400);
     scene.add(arcLight);
     arcLightRef.current = arcLight;
@@ -199,11 +385,11 @@ export default function ThreeViewport({
     arcGlowMeshRef.current = arcGlowMesh;
 
     // -------------------------------------------------------------------------
-    // 9. HIGH-FIDELITY ROBOT COMPONENTS (BUILT ONCE, TRANSFORMED AT 60 FPS)
+    // 10. HIGH-FIDELITY ROBOT COMPONENTS (UNIFORM KUKA ORANGE FINISH)
     // -------------------------------------------------------------------------
     kukaTextureRef.current = createKukaLogoTexture();
 
-    const kukaOrangeMat = new THREE.MeshStandardMaterial({ color: 0xff5500, roughness: 0.22, metalness: 0.25 });
+    const kukaOrangeMat = new THREE.MeshStandardMaterial({ color: 0xf97316, roughness: 0.28, metalness: 0.22 });
     const darkCastMat = new THREE.MeshStandardMaterial({ color: 0x161d2b, roughness: 0.4, metalness: 0.8 });
     const chromeMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.12, metalness: 0.95 });
     const brassMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.2, metalness: 0.85 });
@@ -314,10 +500,8 @@ export default function ThreeViewport({
     feeder.castShadow = true;
     robotArmGroup.add(feeder);
 
-    // Forearm Mesh (Link 2: L2 = 430mm with KUKA logo)
-    const kukaMat = new THREE.MeshStandardMaterial({ map: kukaTextureRef.current, roughness: 0.25, metalness: 0.2 });
-    const forearmMaterials = [kukaOrangeMat, kukaOrangeMat, kukaOrangeMat, kukaOrangeMat, kukaMat, kukaOrangeMat];
-    const forearmMesh = new THREE.Mesh(new THREE.BoxGeometry(48, kinematics.l2, 62), forearmMaterials);
+    // Forearm Mesh (Link 2: L2 = 430mm)
+    const forearmMesh = new THREE.Mesh(new THREE.BoxGeometry(50, kinematics.l2, 64), kukaOrangeMat);
     forearmMesh.castShadow = true;
     robotArmGroup.add(forearmMesh);
 
@@ -366,9 +550,14 @@ export default function ThreeViewport({
       kukaOrangeMat
     };
 
-    // Orbit Camera Drag Controls
+    // Raycaster for 3D Safety Glass Interactive Clicking & Hover
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    // Orbit Camera Drag & Click Controls
     let isDragging = false;
     let dragStart = { x: 0, y: 0 };
+    let mouseDownPos = { x: 0, y: 0 };
     let spherical = { radius: 1650, theta: THREE.MathUtils.degToRad(38), phi: THREE.MathUtils.degToRad(60) };
 
     const updateCameraPos = () => {
@@ -382,9 +571,24 @@ export default function ThreeViewport({
     const onMouseDown = (e) => {
       isDragging = true;
       dragStart = { x: e.clientX, y: e.clientY };
+      mouseDownPos = { x: e.clientX, y: e.clientY };
     };
 
     const onMouseMove = (e) => {
+      // Hover detection on 3D Safety Glass
+      if (container && safetyGrillGroupRef.current && showSafetyGrillRef.current) {
+        const rect = container.getBoundingClientRect();
+        mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(safetyGrillGroupRef.current.children, true);
+        if (intersects.length > 0) {
+          container.style.cursor = 'pointer';
+        } else if (!isDragging) {
+          container.style.cursor = 'default';
+        }
+      }
+
       if (!isDragging) return;
       const dx = e.clientX - dragStart.x;
       const dy = e.clientY - dragStart.y;
@@ -395,7 +599,23 @@ export default function ThreeViewport({
       updateCameraPos();
     };
 
-    const onMouseUp = () => { isDragging = false; };
+    const onMouseUp = (e) => {
+      isDragging = false;
+      if (container) container.style.cursor = 'default';
+
+      // If clicked without dragging (distance < 5px), check raycast on safety glass
+      const dist = Math.hypot(e.clientX - mouseDownPos.x, e.clientY - mouseDownPos.y);
+      if (dist < 6 && container && safetyGrillGroupRef.current && showSafetyGrillRef.current) {
+        const rect = container.getBoundingClientRect();
+        mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(safetyGrillGroupRef.current.children, true);
+        if (intersects.length > 0) {
+          setShowSafetyGrill((prev) => !prev);
+        }
+      }
+    };
 
     const onWheel = (e) => {
       spherical.radius = Math.max(400, Math.min(3200, spherical.radius + e.deltaY * 0.8));
@@ -444,6 +664,33 @@ export default function ThreeViewport({
     };
   }, []);
 
+  // Update Andon Light Tower Status
+  useEffect(() => {
+    if (!andonLightsRef.current.green) return;
+    const { red, amber, green } = andonLightsRef.current;
+
+    if (!isPoweredOn) {
+      red.material.emissiveIntensity = 1.0;
+      amber.material.emissiveIntensity = 0.1;
+      green.material.emissiveIntensity = 0.1;
+    } else if (isWelding) {
+      red.material.emissiveIntensity = 0.1;
+      amber.material.emissiveIntensity = 0.9;
+      green.material.emissiveIntensity = 0.9;
+    } else {
+      red.material.emissiveIntensity = 0.1;
+      amber.material.emissiveIntensity = 0.2;
+      green.material.emissiveIntensity = 0.9;
+    }
+  }, [isPoweredOn, isWelding]);
+
+  // Toggle Visibility of Safety Glass Enclosure
+  useEffect(() => {
+    if (safetyGrillGroupRef.current) {
+      safetyGrillGroupRef.current.visible = showSafetyGrill;
+    }
+  }, [showSafetyGrill]);
+
   // Re-build Workpiece Geometry on Shape or Metal Selection (at Table Top Y=280)
   useEffect(() => {
     if (!wpGroupRef.current) return;
@@ -476,13 +723,11 @@ export default function ThreeViewport({
     wpGroup.add(basePlate);
 
     if (selectedShapeKey === 'square_box') {
-      // Square Box Section (124x124mm, 45mm tall)
       const box = new THREE.Mesh(new THREE.BoxGeometry(124, 45, 124), pbrMat);
       box.position.y = 36.5;
       box.castShadow = true;
       wpGroup.add(box);
 
-      // Outside Perimeter Fillet Seam (at 140mm perimeter)
       for (const [w, h, px, pz] of [
         [140, 4, 0, -70],
         [140, 4, 0, 70],
@@ -494,13 +739,11 @@ export default function ThreeViewport({
         wpGroup.add(seamEdge);
       }
     } else if (selectedShapeKey === 't_fillet') {
-      // Vertical T-Joint Gusset Plate (200x65x12mm)
       const gusset = new THREE.Mesh(new THREE.BoxGeometry(200, 65, 12), pbrMat);
       gusset.position.y = 46.5;
       gusset.castShadow = true;
       wpGroup.add(gusset);
 
-      // Outside Dual Linear Fillet Seams (at Y = ±16mm)
       const seamL = new THREE.Mesh(new THREE.CylinderGeometry(4, 4, 200, 12), seamMat);
       seamL.position.set(0, 15, -16);
       seamL.rotation.z = Math.PI / 2;
@@ -511,25 +754,21 @@ export default function ThreeViewport({
       seamR.rotation.z = Math.PI / 2;
       wpGroup.add(seamR);
     } else if (selectedShapeKey === 'hex_flange') {
-      // Hexagonal Flange (R=66mm outer prism)
       const hex = new THREE.Mesh(new THREE.CylinderGeometry(66, 66, 45, 6), pbrMat);
       hex.position.y = 36.5;
       hex.castShadow = true;
       wpGroup.add(hex);
 
-      // Outside Hexagonal Perimeter Seam (R=74mm)
       const seamHex = new THREE.Mesh(new THREE.TorusGeometry(74, 3.5, 6, 6), seamMat);
       seamHex.position.y = 14;
       seamHex.rotation.x = Math.PI / 2;
       wpGroup.add(seamHex);
     } else {
-      // Circular Pipe Collar (Outer Wall R=64mm, Outside Fillet Seam R=72mm)
       const ring = new THREE.Mesh(new THREE.CylinderGeometry(64, 64, 50, 48, 1, true), pbrMat);
       ring.position.y = 39;
       ring.castShadow = true;
       wpGroup.add(ring);
 
-      // Visible Outside Fillet Seam Ring
       const seam = new THREE.Mesh(new THREE.TorusGeometry(72, 3.5, 16, 64), seamMat);
       seam.position.y = 14;
       seam.rotation.x = Math.PI / 2;
@@ -567,7 +806,7 @@ export default function ThreeViewport({
     if (!robotPartsRef.current.carouselGroup || !dispPos) return;
     const parts = robotPartsRef.current;
 
-    parts.kukaOrangeMat.color.setHex(isPoweredOn ? 0xff5500 : 0x475569);
+    parts.kukaOrangeMat.color.setHex(isPoweredOn ? 0xf97316 : 0x475569);
 
     const { x, y, z } = dispPos;
     const res = kinematics.solve(x, y, z);
@@ -757,6 +996,34 @@ export default function ThreeViewport({
             {btn.label}
           </button>
         ))}
+      </div>
+
+      {/* Bottom Floating Safety Glass Controls & Status */}
+      <div className="viewport-bottom-bar">
+        <button
+          onClick={() => setShowSafetyGrill(!showSafetyGrill)}
+          className={`safety-grill-toggle ${showSafetyGrill ? 'active' : ''}`}
+          title="Click here or click directly on the 3D safety glass to remove/add it"
+        >
+          {showSafetyGrill ? <ShieldCheck size={14} className="text-emerald-500" /> : <ShieldAlert size={14} className="text-amber-500" />}
+          <span>{showSafetyGrill ? 'SAFETY GLASS: ENCLOSING CELL (CLICK TO REMOVE)' : 'SAFETY GLASS: REMOVED (CLICK TO ADD)'}</span>
+        </button>
+
+        {/* 3 Status Indicator Boxes */}
+        <div className="safety-status-boxes">
+          <div className={`status-box-indicator ${isPoweredOn ? 'green' : 'red'}`} title={isPoweredOn ? 'Drives Energized (Safe)' : 'Emergency Lockout (Trip)'}>
+            <span className="dot"></span>
+            <span>POWER</span>
+          </div>
+          <div className={`status-box-indicator ${isWelding ? 'amber' : 'green'}`} title={isWelding ? 'Arc Struck (Hot Zone)' : 'Standby / Clear'}>
+            <span className="dot"></span>
+            <span>{isWelding ? 'ARC HOT' : 'CLEAR'}</span>
+          </div>
+          <div className={`status-box-indicator ${showSafetyGrill ? 'green' : 'gray'}`} title={showSafetyGrill ? 'Safety Glass Enclosed' : 'Safety Glass Removed'}>
+            <span className="dot"></span>
+            <span>{showSafetyGrill ? 'GLASS ON' : 'OPEN'}</span>
+          </div>
+        </div>
       </div>
 
       {/* Welding Active Banner */}
