@@ -13,7 +13,12 @@ const HOME_COORDS = { x: 450.0, y: 0.0, z: 600.0 };
 export default function App() {
   const [targetPos, setTargetPos] = useState(HOME_COORDS);
   const [dispPos, setDispPos] = useState(HOME_COORDS);
-  const [jointAngles, setJointAngles] = useState({ A1: 0, A2: -26, A3: 94, A4: 0, A5: -68, A6: -108 });
+  const [jointAngles, setJointAngles] = useState({ A1: 0.0, A2: -30.6, A3: 29.4, A4: 0.0, A5: 43.8, A6: -112.5 });
+  const [controlMode, setControlMode] = useState('CARTESIAN'); // 'CARTESIAN' | 'JOINTS'
+  const [wsConnected, setWsConnected] = useState(false);
+
+  const targetJointAnglesRef = useRef({ A1: 0.0, A2: -30.6, A3: 29.4, A4: 0.0, A5: 43.8, A6: -112.5 });
+  const currentJointAnglesRef = useRef({ A1: 0.0, A2: -30.6, A3: 29.4, A4: 0.0, A5: 43.8, A6: -112.5 });
 
   const [isPoweredOn, setIsPoweredOn] = useState(true);
   const [isAutoCycle, setIsAutoCycle] = useState(false);
@@ -53,6 +58,75 @@ export default function App() {
     const time = new Date().toLocaleTimeString();
     setLogs((prev) => [`[${time}] ${msg}`, ...prev.slice(0, 50)]);
   };
+
+  // Update Robot 6-Axis Joints from External Controller (FastAPI WebSocket)
+  const updateRobotJoints = (joints) => {
+    if (!joints) return;
+    const parsed = {
+      A1: joints.a1 !== undefined ? Number(joints.a1) : (joints.A1 !== undefined ? Number(joints.A1) : 0),
+      A2: joints.a2 !== undefined ? Number(joints.a2) : (joints.A2 !== undefined ? Number(joints.A2) : -30.6),
+      A3: joints.a3 !== undefined ? Number(joints.a3) : (joints.A3 !== undefined ? Number(joints.A3) : 29.4),
+      A4: joints.a4 !== undefined ? Number(joints.a4) : (joints.A4 !== undefined ? Number(joints.A4) : 0),
+      A5: joints.a5 !== undefined ? Number(joints.a5) : (joints.A5 !== undefined ? Number(joints.A5) : 43.8),
+      A6: joints.a6 !== undefined ? Number(joints.a6) : (joints.A6 !== undefined ? Number(joints.A6) : -112.5),
+    };
+
+    targetJointAnglesRef.current = parsed;
+    setControlMode('JOINTS');
+    setAutoStepName('EXTERNAL JOINT STREAM');
+    addLog(`[ROBOT-CTRL] Joint Update: A1:${parsed.A1.toFixed(1)}° A2:${parsed.A2.toFixed(1)}° A3:${parsed.A3.toFixed(1)}° A4:${parsed.A4.toFixed(1)}° A5:${parsed.A5.toFixed(1)}° A6:${parsed.A6.toFixed(1)}°`);
+  };
+
+  // Real-Time WebSocket Client connecting to Python FastAPI Controller
+  useEffect(() => {
+    let ws;
+    let reconnectTimer;
+    let isUnmounted = false;
+
+    const connectWs = () => {
+      try {
+        ws = new WebSocket('ws://127.0.0.1:8000/ws/robot');
+
+        ws.onopen = () => {
+          if (isUnmounted) return;
+          setWsConnected(true);
+          addLog('[WS-ROBOT] Connected to Python Robot Controller (ws://127.0.0.1:8000/ws/robot)');
+        };
+
+        ws.onmessage = (event) => {
+          if (isUnmounted) return;
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === 'joint_update' && data.joints) {
+              updateRobotJoints(data.joints);
+            }
+          } catch (err) {
+            console.warn('Error parsing WS joint packet:', err);
+          }
+        };
+
+        ws.onclose = () => {
+          if (isUnmounted) return;
+          setWsConnected(false);
+          reconnectTimer = setTimeout(connectWs, 2000);
+        };
+
+        ws.onerror = () => {
+          if (ws.readyState === WebSocket.OPEN) ws.close();
+        };
+      } catch (e) {
+        reconnectTimer = setTimeout(connectWs, 2000);
+      }
+    };
+
+    connectWs();
+
+    return () => {
+      isUnmounted = true;
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (ws) ws.close();
+    };
+  }, []);
 
   // Web Audio Synthesizer
   const audioCtxRef = useRef(null);
@@ -123,6 +197,7 @@ export default function App() {
   // Jog Action Handler
   const handleJog = (axis, dir) => {
     if (!isPoweredOn) return;
+    setControlMode('CARTESIAN');
     const delta = jogStep * dir;
     setTargetPos((prev) => {
       const updated = { ...prev, [axis]: prev[axis] + delta };
@@ -134,6 +209,7 @@ export default function App() {
   // Preset Action Handler
   const handlePreset = (x, y, z) => {
     if (!isPoweredOn) return;
+    setControlMode('CARTESIAN');
     setTargetPos({ x, y, z });
     addLog(`Target Preset -> X:${x} Y:${y} Z:${z}`);
   };
@@ -161,6 +237,7 @@ export default function App() {
   // Toggle Auto Cycle with Instant Return to Home
   const toggleAutoCycle = () => {
     if (!isPoweredOn) return;
+    setControlMode('CARTESIAN');
 
     if (isAutoCycle) {
       setIsAutoCycle(false);
@@ -256,6 +333,7 @@ export default function App() {
 
   const runKrlScript = async () => {
     if (!isPoweredOn || isScriptRunning) return;
+    setControlMode('CARTESIAN');
     const lines = krlCode.split('\n');
     setIsScriptRunning(true);
     scriptExecutionRef.current = { isRunning: true, currentLine: 0, lines };
@@ -331,46 +409,68 @@ export default function App() {
     const updateMotion = () => {
       animId = requestAnimationFrame(updateMotion);
 
-      setDispPos((curr) => {
-        const lerp = (0.07 * (speedOverride / 50)) * (isPoweredOn ? 1 : 0.05);
-        const dx = (targetPosRef.current.x - curr.x) * lerp;
-        const dy = (targetPosRef.current.y - curr.y) * lerp;
-        const dz = (targetPosRef.current.z - curr.z) * lerp;
+      if (controlMode === 'JOINTS') {
+        const lerp = Math.min(1.0, 0.08 * (speedOverride / 50)) * (isPoweredOn ? 1 : 0.05);
+        const curr = currentJointAnglesRef.current;
+        const tgt = targetJointAnglesRef.current;
 
-        const next = {
-          x: curr.x + dx,
-          y: curr.y + dy,
-          z: curr.z + dz
+        const nextAngles = {
+          A1: curr.A1 + (tgt.A1 - curr.A1) * lerp,
+          A2: curr.A2 + (tgt.A2 - curr.A2) * lerp,
+          A3: curr.A3 + (tgt.A3 - curr.A3) * lerp,
+          A4: curr.A4 + (tgt.A4 - curr.A4) * lerp,
+          A5: curr.A5 + (tgt.A5 - curr.A5) * lerp,
+          A6: curr.A6 + (tgt.A6 - curr.A6) * lerp
         };
+        currentJointAnglesRef.current = nextAngles;
+        setJointAngles(nextAngles);
 
-        // Update Joint Angles via Kinematics
-        const sol = kinematics.solve(next.x, next.y, next.z);
-        setJointAngles(sol.angles);
+        const fwd = kinematics.forward(nextAngles);
+        setDispPos(fwd.tcp);
+        targetPosRef.current = fwd.tcp;
+      } else {
+        setDispPos((curr) => {
+          const lerp = (0.07 * (speedOverride / 50)) * (isPoweredOn ? 1 : 0.05);
+          const dx = (targetPosRef.current.x - curr.x) * lerp;
+          const dy = (targetPosRef.current.y - curr.y) * lerp;
+          const dz = (targetPosRef.current.z - curr.z) * lerp;
 
-        // Check Seam Welding Zone Contact (Z <= 305mm on table at X=620)
-        const inWeldPlane = isPoweredOn && next.z <= 305;
-        const dxWp = next.x - 620;
-        const dyWp = next.y;
-        const distFromWpCenter = Math.sqrt(dxWp * dxWp + dyWp * dyWp);
+          const next = {
+            x: curr.x + dx,
+            y: curr.y + dy,
+            z: curr.z + dz
+          };
 
-        const atSeam = inWeldPlane && distFromWpCenter <= 120;
+          // Update Joint Angles via Kinematics
+          const sol = kinematics.solve(next.x, next.y, next.z);
+          setJointAngles(sol.angles);
+          currentJointAnglesRef.current = sol.angles;
 
-        if (atSeam !== isWelding) {
-          setIsWelding(atSeam);
-          if (atSeam) {
-            playWeldSound();
-          } else {
-            stopWeldSound();
+          // Check Seam Welding Zone Contact (Z <= 305mm on table at X=620)
+          const inWeldPlane = isPoweredOn && next.z <= 305;
+          const dxWp = next.x - 620;
+          const dyWp = next.y;
+          const distFromWpCenter = Math.sqrt(dxWp * dxWp + dyWp * dyWp);
+
+          const atSeam = inWeldPlane && distFromWpCenter <= 120;
+
+          if (atSeam !== isWelding) {
+            setIsWelding(atSeam);
+            if (atSeam) {
+              playWeldSound();
+            } else {
+              stopWeldSound();
+            }
           }
-        }
 
-        return next;
-      });
+          return next;
+        });
+      }
     };
 
     updateMotion();
     return () => cancelAnimationFrame(animId);
-  }, [speedOverride, isPoweredOn, isWelding, soundEnabled]);
+  }, [controlMode, speedOverride, isPoweredOn, isWelding, soundEnabled]);
 
   return (
     <div className="app-container">
@@ -400,6 +500,11 @@ export default function App() {
             <span>{isPoweredOn ? '400V DRIVES: ENERGIZED' : 'DRIVES: LOCKED OUT'}</span>
           </div>
 
+          <div className={`status-badge ${wsConnected ? 'online' : 'offline'}`}>
+            <Radio size={14} />
+            <span>{wsConnected ? 'PYTHON CTRL: CONNECTED' : 'PYTHON CTRL: OFFLINE'}</span>
+          </div>
+
           <div className="status-badge active">
             <Radio size={14} />
             <span>KRC5 ONLINE</span>
@@ -412,6 +517,8 @@ export default function App() {
         <div className="viewport-wrapper">
           <ThreeViewport
             dispPos={dispPos}
+            jointAngles={jointAngles}
+            controlMode={controlMode}
             isWelding={isWelding}
             isPoweredOn={isPoweredOn}
             selectedMetalKey={selectedMetalKey}

@@ -119,4 +119,60 @@ export class RobotKinematics {
       reachable
     };
   }
+
+  /**
+   * Closed-form Analytical Forward Kinematics
+   * Computes 3D joint spatial coordinates (J0, J1, J2, J3, J4, TCP) directly from 6-axis angles (degrees).
+   * Matches the KUKA physical model hierarchy and coordinate system.
+   */
+  forward(angles) {
+    const a1 = angles.A1 ?? angles.a1 ?? 0.0;
+    const a2 = angles.A2 ?? angles.a2 ?? -30.6;
+    const a3 = angles.A3 ?? angles.a3 ?? 29.4;
+    const a4 = angles.A4 ?? angles.a4 ?? 0.0;
+    const a5 = angles.A5 ?? angles.a5 ?? 43.8;
+    const a6 = angles.A6 ?? angles.a6 ?? -112.5;
+
+    // Convert degrees to radians for Three.js trigonometric calculations
+    const a1Rad = (a1 * Math.PI) / 180.0;
+    const a2Rad = (a2 * Math.PI) / 180.0;
+    const a3Rad = (a3 * Math.PI) / 180.0;
+    const a5Rad = (a5 * Math.PI) / 180.0;
+
+    const theta1 = Math.PI / 2.0 - a2Rad;
+    const theta2 = a3Rad + Math.PI / 2.0;
+
+    const uxArm = Math.cos(a1Rad);
+    const uyArm = Math.sin(a1Rad);
+
+    const j0 = [0.0, 0.0, 0.0];
+    const j1 = [0.0, 0.0, this.d1];
+    const j2 = [uxArm * this.a1, uyArm * this.a1, this.d1];
+
+    const r3 = this.a1 + this.l1 * Math.cos(theta1);
+    const z3 = this.d1 + this.l1 * Math.sin(theta1);
+    const j3 = [uxArm * r3, uyArm * r3, z3];
+
+    const r4 = r3 + this.l2 * Math.cos(theta1 - theta2);
+    const z4 = z3 + this.l2 * Math.sin(theta1 - theta2);
+    const j4 = [uxArm * r4, uyArm * r4, z4];
+
+    // Tool pitch angle: in solve(), a5Deg = ((tPitch - (theta1 - theta2)) * 180) / PI
+    // Therefore: tPitch = (theta1 - theta2) + a5Rad
+    const tPitch = (theta1 - theta2) + a5Rad;
+
+    // Direction vector of tool pointing down toward workpiece
+    const tcp = [
+      j4[0] + this.l3 * Math.sin(tPitch) * uxArm,
+      j4[1] + this.l3 * Math.sin(tPitch) * uyArm,
+      j4[2] - this.l3 * Math.cos(tPitch)
+    ];
+
+    return {
+      joints: { J0: j0, J1: j1, J2: j2, J3: j3, J4: j4, TCP: tcp },
+      angles: { A1: a1, A2: a2, A3: a3, A4: a4, A5: a5, A6: a6 },
+      tcp: { x: tcp[0], y: tcp[1], z: tcp[2] }
+    };
+  }
 }
+

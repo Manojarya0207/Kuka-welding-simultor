@@ -30,6 +30,8 @@ function createKukaLogoTexture() {
 
 export default function ThreeViewport({
   dispPos,
+  jointAngles,
+  controlMode = 'CARTESIAN',
   isWelding,
   isPoweredOn,
   selectedMetalKey,
@@ -564,13 +566,21 @@ export default function ThreeViewport({
 
   // ULTRA-FAST 60 FPS CLOSED-FORM FORWARD KINEMATICS POSITIONING
   useEffect(() => {
-    if (!robotPartsRef.current.carouselGroup || !dispPos) return;
+    if (!robotPartsRef.current.carouselGroup) return;
     const parts = robotPartsRef.current;
 
     parts.kukaOrangeMat.color.setHex(isPoweredOn ? 0xff5500 : 0x475569);
 
-    const { x, y, z } = dispPos;
-    const res = kinematics.solve(x, y, z);
+    let res;
+    if (controlMode === 'JOINTS' && jointAngles) {
+      res = kinematics.forward(jointAngles);
+    } else if (dispPos) {
+      const { x, y, z } = dispPos;
+      res = kinematics.solve(x, y, z);
+    } else {
+      return;
+    }
+
     const j = res.joints;
     const a1Rad = THREE.MathUtils.degToRad(res.angles.A1);
 
@@ -693,7 +703,7 @@ export default function ThreeViewport({
         arcGlowMeshRef.current.material.opacity = 0;
       }
     }
-  }, [dispPos, isWelding, isPoweredOn, metalData]);
+  }, [dispPos, jointAngles, controlMode, isWelding, isPoweredOn, metalData]);
 
   // Animate Micro-Sparks Particles
   useEffect(() => {
