@@ -1,4 +1,21 @@
-@charset "UTF-8";
+<!DOCTYPE html>
+<html lang="en"><head>
+    <script type="module">import { injectIntoGlobalHook } from "/@react-refresh";
+injectIntoGlobalHook(window);
+window.$RefreshReg$ = () => {};
+window.$RefreshSig$ = () => (type) => type;</script>
+
+    <script type="module" src="/@vite/client"></script>
+
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff5500'&gt;&lt;path d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/&gt;&lt;/svg&gt;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KUKA Industrial Robotic Weld Cell | 3D Digital Twin</title>
+    <!-- Google Fonts: Outfit, Inter, JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;700&amp;family=Outfit:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+  <style type="text/css" data-vite-dev-id="/Users/manojsarya/Documents/ATS_Projects/Kuka-welding-simultor/src/index.css">@charset "UTF-8";
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -565,11 +582,10 @@ html, body {
 }
 
 .joint-card {
-  background: var(--bg-surface);
+  background: var(--bg-surface-subtle);
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
   padding: 8px 12px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .joint-card-top {
@@ -582,35 +598,26 @@ html, body {
 .joint-title-group {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .joint-axis-tag {
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 900;
   color: var(--kuka-orange);
   font-family: var(--font-mono);
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
-  padding: 1px 6px;
-  border-radius: 4px;
 }
 
 .joint-axis-name {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-body);
+  font-size: 11px;
+  color: var(--text-muted);
 }
 
 .joint-values-display {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   font-size: 11px;
-}
-
-.val-item {
-  white-space: nowrap;
 }
 
 .val-item.actual {
@@ -623,100 +630,59 @@ html, body {
 
 .val-diff {
   font-size: 10px;
-  color: #ea580c;
+  color: #d97706;
   font-weight: 700;
   font-family: var(--font-mono);
-  background: #fff7ed;
-  padding: 1px 5px;
-  border-radius: 4px;
-  white-space: nowrap;
 }
 
 .joint-inputs-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-}
-
-.limit-tag {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--text-muted);
-  min-width: 38px;
-  user-select: none;
-}
-
-.limit-tag.min {
-  text-align: right;
-}
-
-.limit-tag.max {
-  text-align: left;
+  gap: 12px;
+  margin-bottom: 4px;
 }
 
 .joint-range-slider {
   flex: 1;
-  height: 6px;
+  height: 4px;
   background: #e2e8f0;
-  border-radius: 3px;
+  border-radius: 2px;
   outline: none;
   cursor: pointer;
   accent-color: var(--kuka-orange);
-}
-
-.val-box-actual {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 700;
-  color: #0369a1;
-  background: #f0f9ff;
-  border: 1px solid #bae6fd;
-  border-radius: 6px;
-  padding: 3px 8px;
-  min-width: 58px;
-  text-align: right;
-  white-space: nowrap;
-  user-select: none;
 }
 
 .numeric-input-wrapper {
   display: flex;
   align-items: center;
   background: #ffffff;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-subtle);
   border-radius: 6px;
   padding: 2px 6px;
 }
 
 .joint-number-field {
-  width: 50px;
+  width: 58px;
   border: none;
   font-family: var(--font-mono);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-main);
   outline: none;
   text-align: right;
-  background: transparent;
 }
 
 .unit-label {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 10px;
   color: var(--text-muted);
-  margin-left: 2px;
+  margin-left: 3px;
 }
 
-.preset-btn.sync-btn {
-  background: #f0f9ff;
-  color: #0369a1;
-  border-color: #bae6fd;
-  font-weight: 700;
-}
-
-.preset-btn.sync-btn:hover {
-  background: #e0f2fe;
-  border-color: #7dd3fc;
+.joint-limit-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: var(--text-faint);
 }
 
 /* Lifecycle Stepper */
@@ -1682,3 +1648,10 @@ html, body {
   color: var(--text-body);
   margin-bottom: 4px;
 }
+</style></head>
+  <body>
+    <div id="root"><div class="kuka-app-root"><header class="kuka-header"><div class="header-left"><div class="brand-logo-badge"><span class="brand-kuka-text">KUKA</span><span class="brand-sub-tag">KR C5 DIGITAL TWIN</span></div><div class="robot-select-group"><label class="text-xs text-slate-500 font-medium">Unit:</label><select class="robot-select-input"><option value="KUKA-01">KUKA-01 (KR CYBERTECH)</option><option value="KUKA-02">KUKA-02 (Welding Cell B)</option></select></div><div class="connection-pill offline"><span class="dot"></span><span>OFFLINE</span></div><div class="drives-pill energized"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-zap" aria-hidden="true"><path d="M15.914 4a1.5 1.5 0 00-2.474-1.561l-9 9A1.5 1.5 0 005.5 14h4.002a.5.5 0 01.471.666L8.086 20a1.5 1.5 0 002.475 1.56l9-9A1.5 1.5 0 0018.5 10h-3.997a.5.5 0 01-.472-.667z"></path></svg><span>400V DRIVES ON</span></div></div><div class="header-right"><div class="mode-toggle-group"><button class="mode-btn ">SIMULATION</button><button class="mode-btn live active">LIVE ROBOT</button></div><button class="header-icon-btn" title="Mute audio"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-volume2 lucide-volume-2" aria-hidden="true"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"></path><path d="M16 9a5 5 0 0 1 0 6"></path><path d="M19.364 18.364a9 9 0 0 0 0-12.728"></path></svg></button><div class="notification-bell-root"><button class="bell-trigger-btn" title="View Notifications" aria-label="Notifications"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bell" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"></path><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"></path></svg></button></div><button class="btn-header-estop " title="Emergency Stop (Clamp Brakes)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-octagon-alert" aria-hidden="true"><path d="M12 16h.01"></path><path d="M12 8v4"></path><path d="M15.312 2a2 2 0 0 1 1.414.586l4.688 4.688A2 2 0 0 1 22 8.688v6.624a2 2 0 0 1-.586 1.414l-4.688 4.688a2 2 0 0 1-1.414.586H8.688a2 2 0 0 1-1.414-.586l-4.688-4.688A2 2 0 0 1 2 15.312V8.688a2 2 0 0 1 .586-1.414l4.688-4.688A2 2 0 0 1 8.688 2z"></path></svg><span>E-STOP</span></button></div></header><main class="main-viewport-grid"><section class="viewport-column"><div class="three-viewport-container"><div class="viewport-hud-top"><span class="hud-badge-title"><span class="pulse-dot"></span>KUKA KR CYBERTECH 3D DIGITAL TWIN</span><span class="hud-sep">|</span><span class="hud-coords">TCP: X: Y: Z: mm</span><span class="hud-sep">|</span><span class="hud-step">Circular Pipe Collar (ASME B31.3): CLOSED-LOOP FEEDBACK</span></div><div class="viewport-status-panel"><div class="vsp-header"><span class="vsp-robot-name">KUKA-01</span><span class="vsp-status-chip idle">IDLE</span></div><div class="vsp-row"><span class="vsp-label">Target:</span><span class="vsp-val font-mono">A1:0.0 A2:-30.6 A3:29.4</span></div><div class="vsp-row"><span class="vsp-label">Actual:</span><span class="vsp-val font-mono">A1:0.0 A2:-30.6 A3:29.4</span></div><div class="vsp-row footer-row"><span class="vsp-label">Mode: LIVE</span></div></div><div class="viewport-camera-toolbar"><button class="cam-btn">ISO</button><button class="cam-btn">TOP</button><button class="cam-btn">FRONT</button><button class="cam-btn">SIDE</button></div></div></section><section class="control-column"><div class="joint-control-panel"><div class="panel-header"><div class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sliders-vertical text-slate-600" aria-hidden="true"><path d="M10 8h4"></path><path d="M12 21v-9"></path><path d="M12 8V3"></path><path d="M17 16h4"></path><path d="M19 12V3"></path><path d="M19 21v-5"></path><path d="M3 14h4"></path><path d="M5 10V3"></path><path d="M5 21v-7"></path></svg><h2 class="panel-title">6-Axis Joint Controller</h2></div><div class="flex items-center gap-2"><span class="status-pill status-pill-green">Drives Energized</span><span class="mode-badge">LIVE</span></div></div><div class="presets-bar"><span class="presets-label">Presets:</span><div class="presets-buttons"><button class="preset-btn">Home Standby</button><button class="preset-btn">High Approach</button><button class="preset-btn">Welding Seam</button><button class="preset-btn">Torch Clean</button></div></div><div class="joint-grid"><div class="joint-card"><div class="joint-card-top"><div class="joint-title-group"><span class="joint-axis-tag">A1</span><span class="joint-axis-name">Turntable</span></div><div class="joint-values-display"><span class="val-item actual">Actual: <strong>0.00 deg</strong></span><span class="val-item target">Target: <strong>0.00 deg</strong></span></div></div><div class="joint-inputs-row"><input type="range" min="-185" max="185" step="0.5" class="joint-range-slider" value="0"><div class="numeric-input-wrapper"><input type="number" min="-185" max="185" step="1" class="joint-number-field" value="0"><span class="unit-label">deg</span></div></div><div class="joint-limit-footer"><span>Min: -185 deg</span><span>Max: 185 deg</span></div></div><div class="joint-card"><div class="joint-card-top"><div class="joint-title-group"><span class="joint-axis-tag">A2</span><span class="joint-axis-name">Shoulder</span></div><div class="joint-values-display"><span class="val-item actual">Actual: <strong>-30.60 deg</strong></span><span class="val-item target">Target: <strong>-30.60 deg</strong></span></div></div><div class="joint-inputs-row"><input type="range" min="-155" max="35" step="0.5" class="joint-range-slider" value="-30.6"><div class="numeric-input-wrapper"><input type="number" min="-155" max="35" step="1" class="joint-number-field" value="-30.6"><span class="unit-label">deg</span></div></div><div class="joint-limit-footer"><span>Min: -155 deg</span><span>Max: 35 deg</span></div></div><div class="joint-card"><div class="joint-card-top"><div class="joint-title-group"><span class="joint-axis-tag">A3</span><span class="joint-axis-name">Elbow</span></div><div class="joint-values-display"><span class="val-item actual">Actual: <strong>29.40 deg</strong></span><span class="val-item target">Target: <strong>29.40 deg</strong></span></div></div><div class="joint-inputs-row"><input type="range" min="-130" max="154" step="0.5" class="joint-range-slider" value="29.4"><div class="numeric-input-wrapper"><input type="number" min="-130" max="154" step="1" class="joint-number-field" value="29.4"><span class="unit-label">deg</span></div></div><div class="joint-limit-footer"><span>Min: -130 deg</span><span>Max: 154 deg</span></div></div><div class="joint-card"><div class="joint-card-top"><div class="joint-title-group"><span class="joint-axis-tag">A4</span><span class="joint-axis-name">Forearm Roll</span></div><div class="joint-values-display"><span class="val-item actual">Actual: <strong>0.00 deg</strong></span><span class="val-item target">Target: <strong>0.00 deg</strong></span></div></div><div class="joint-inputs-row"><input type="range" min="-350" max="350" step="0.5" class="joint-range-slider" value="0"><div class="numeric-input-wrapper"><input type="number" min="-350" max="350" step="1" class="joint-number-field" value="0"><span class="unit-label">deg</span></div></div><div class="joint-limit-footer"><span>Min: -350 deg</span><span>Max: 350 deg</span></div></div><div class="joint-card"><div class="joint-card-top"><div class="joint-title-group"><span class="joint-axis-tag">A5</span><span class="joint-axis-name">Wrist Pitch</span></div><div class="joint-values-display"><span class="val-item actual">Actual: <strong>43.80 deg</strong></span><span class="val-item target">Target: <strong>43.80 deg</strong></span></div></div><div class="joint-inputs-row"><input type="range" min="-130" max="130" step="0.5" class="joint-range-slider" value="43.8"><div class="numeric-input-wrapper"><input type="number" min="-130" max="130" step="1" class="joint-number-field" value="43.8"><span class="unit-label">deg</span></div></div><div class="joint-limit-footer"><span>Min: -130 deg</span><span>Max: 130 deg</span></div></div><div class="joint-card"><div class="joint-card-top"><div class="joint-title-group"><span class="joint-axis-tag">A6</span><span class="joint-axis-name">Flange Roll</span></div><div class="joint-values-display"><span class="val-item actual">Actual: <strong>-112.50 deg</strong></span><span class="val-item target">Target: <strong>-112.50 deg</strong></span></div></div><div class="joint-inputs-row"><input type="range" min="-350" max="350" step="0.5" class="joint-range-slider" value="-112.5"><div class="numeric-input-wrapper"><input type="number" min="-350" max="350" step="1" class="joint-number-field" value="-112.5"><span class="unit-label">deg</span></div></div><div class="joint-limit-footer"><span>Min: -350 deg</span><span>Max: 350 deg</span></div></div></div><div class="panel-actions-toolbar"><button class="btn-preview " title="Toggle 3D target preview ghost model"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"></path><circle cx="12" cy="12" r="3"></circle></svg>Preview in 3D</button><button class="btn-send-command"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-play" aria-hidden="true"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"></path></svg>Send to Robot</button><button class="btn-estop"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-octagon-alert" aria-hidden="true"><path d="M12 16h.01"></path><path d="M12 8v4"></path><path d="M15.312 2a2 2 0 0 1 1.414.586l4.688 4.688A2 2 0 0 1 22 8.688v6.624a2 2 0 0 1-.586 1.414l-4.688 4.688a2 2 0 0 1-1.414.586H8.688a2 2 0 0 1-1.414-.586l-4.688-4.688A2 2 0 0 1 2 15.312V8.688a2 2 0 0 1 .586-1.414l4.688-4.688A2 2 0 0 1 8.688 2z"></path></svg>E-STOP</button></div></div></section></main><section class="bottom-workspace-tabs"><div class="tabs-header-bar"><div class="tabs-nav-buttons"><button class="tab-nav-item active"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-ccw-clock" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path><path d="M12 7v5l4 2"></path></svg>Command History (0)</button><button class="tab-nav-item "><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-check" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>Notifications Archive (0)</button><button class="tab-nav-item "><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-activity" aria-hidden="true"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"></path></svg>Verified Telemetry Stream</button><button class="tab-nav-item "><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path></svg>Audit Trail</button></div></div><div class="tabs-content-area"><div class="history-table-card"><div class="history-table-header"><div class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-ccw-clock text-slate-600" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path><path d="M12 7v5l4 2"></path></svg><h3 class="history-title">Command Execution History</h3><span class="history-count">(0 records)</span></div><button class="btn-table-refresh" title="Refresh command history"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-refresh-cw" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M8 16H3v5"></path></svg>Refresh</button></div><div class="table-responsive"><table class="kuka-table"><thead><tr><th>Command ID</th><th>Mode</th><th>Target Position</th><th>Actual Reached Position</th><th>Status</th><th>Submitted Time</th><th>Duration</th></tr></thead><tbody><tr><td colspan="7" class="table-empty">No commands recorded in session.</td></tr></tbody></table></div></div></div></section></div></div>
+    <script type="module" src="/src/main.jsx?t=1788030995024"></script>
+  
+
+</body></html>

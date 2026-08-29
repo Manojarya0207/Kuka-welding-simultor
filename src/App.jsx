@@ -49,6 +49,11 @@ export default function App() {
   const [targetJoints, setTargetJoints] = useState(DEFAULT_JOINTS);
   const [actualJoints, setActualJoints] = useState(DEFAULT_JOINTS);
   const [isPreviewActive, setIsPreviewActive] = useState(false);
+  const isPreviewActiveRef = useRef(false);
+
+  useEffect(() => {
+    isPreviewActiveRef.current = isPreviewActive;
+  }, [isPreviewActive]);
 
   // Command Execution State Machine
   const [activeCommandState, setActiveCommandState] = useState(null);
@@ -130,7 +135,12 @@ export default function App() {
       const res = await fetch(`${API_BASE}/robots/${robotId}/state`);
       if (res.ok) {
         const data = await res.json();
-        if (data.joints) setActualJoints(data.joints);
+        if (data.joints) {
+          setActualJoints(data.joints);
+          if (!isPreviewActiveRef.current) {
+            setTargetJoints(data.joints);
+          }
+        }
         if (data.status) setRobotStatus(data.status);
         if (data.mode) setRobotMode(data.mode);
         if (data.drives_energized !== undefined) setDrivesEnergized(data.drives_energized);
@@ -169,7 +179,6 @@ export default function App() {
     try {
       const res = await fetch(`${API_BASE}/audit-logs?limit=50`);
       if (res.ok) {
-        const data = await res.json();
         setAuditLogs(data.logs || []);
       }
     } catch (e) {}
@@ -203,7 +212,12 @@ export default function App() {
             // 1. Authoritative robot_state feedback stream
             if (data.type === 'robot_state' && data.payload) {
               const pl = data.payload;
-              if (pl.actual_joints) setActualJoints(pl.actual_joints);
+              if (pl.actual_joints) {
+                setActualJoints(pl.actual_joints);
+                if (!isPreviewActiveRef.current) {
+                  setTargetJoints(pl.actual_joints);
+                }
+              }
               if (pl.status) setRobotStatus(pl.status.toLowerCase());
               if (pl.mode) setRobotMode(pl.mode);
               if (pl.drives_energized !== undefined) setDrivesEnergized(pl.drives_energized);
@@ -216,6 +230,7 @@ export default function App() {
               addToast(data);
 
               if (data.event === 'COMMAND_COMPLETED') {
+                setIsPreviewActive(false);
                 setActiveCommandState((prev) => ({
                   ...prev,
                   status: 'COMPLETED',
@@ -281,6 +296,12 @@ export default function App() {
   // ---------------------------------------------------------------------------
   const handleTargetChange = (axis, val) => {
     setTargetJoints((prev) => ({ ...prev, [axis]: val }));
+    setIsPreviewActive(true);
+  };
+
+  const handleSyncWithRobot = () => {
+    setTargetJoints({ ...actualJoints });
+    setIsPreviewActive(false);
   };
 
   const handleApplyPreset = (presetJoints) => {
@@ -520,6 +541,7 @@ export default function App() {
             actualJoints={actualJoints}
             onTargetChange={handleTargetChange}
             onApplyPreset={handleApplyPreset}
+            onSyncWithRobot={handleSyncWithRobot}
             onPreviewToggle={handlePreviewToggle}
             isPreviewActive={isPreviewActive}
             onSendCommand={handleSendCommandClick}

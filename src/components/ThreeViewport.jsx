@@ -6,6 +6,22 @@ import { RobotKinematics } from '../kinematics';
 
 const kinematics = new RobotKinematics();
 
+// Robust quaternion orientation calculation that prevents NaN when vectors are parallel or anti-parallel
+function safeSetFromUnitVectors(quat, vFrom, vTo) {
+  const r = vFrom.dot(vTo) + 1.0;
+  if (r < 1e-6) {
+    if (Math.abs(vFrom.x) > Math.abs(vFrom.z)) {
+      quat.set(-vFrom.y, vFrom.x, 0, 0).normalize();
+    } else {
+      quat.set(0, -vFrom.z, vFrom.y, 0).normalize();
+    }
+  } else {
+    const cross = new THREE.Vector3().crossVectors(vFrom, vTo);
+    quat.set(cross.x, cross.y, cross.z, r).normalize();
+  }
+  return quat;
+}
+
 // High-resolution KUKA logo canvas texture with industrial cast plate, bevel & fasteners
 function createKukaLogoTexture() {
   const canvas = document.createElement('canvas');
@@ -329,6 +345,11 @@ export default function ThreeViewport({
       roughness: 0.35,
       metalness: 0.25
     });
+    const conduitMat = new THREE.MeshStandardMaterial({
+      color: 0x1e293b,
+      roughness: 0.85,
+      metalness: 0.1
+    });
 
     materialsRef.current = {
       kukaOrangeMat,
@@ -340,7 +361,8 @@ export default function ThreeViewport({
       hazardMat,
       kukaLogoMat,
       coolantBlueMat,
-      coolantRedMat
+      coolantRedMat,
+      conduitMat
     };
 
     const robotArmGroup = new THREE.Group();
@@ -1031,7 +1053,7 @@ export default function ThreeViewport({
     const arm1Mid = new THREE.Vector3().addVectors(pJ2, pJ3).multiplyScalar(0.5);
     const arm1Dir = new THREE.Vector3().subVectors(pJ3, pJ2).normalize();
     parts.upperArmGroup.position.copy(arm1Mid);
-    parts.upperArmGroup.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), arm1Dir);
+    safeSetFromUnitVectors(parts.upperArmGroup.quaternion, new THREE.Vector3(0, 1, 0), arm1Dir);
 
     // Dynamic Hydro-Pneumatic Counterbalance Cylinder & Rod
     const cbBase = pJ2.clone().add(new THREE.Vector3(-30, -50, -32).applyAxisAngle(new THREE.Vector3(0, 1, 0), -a1Rad));
@@ -1039,24 +1061,23 @@ export default function ThreeViewport({
     const cbDir = new THREE.Vector3().subVectors(cbTarget, cbBase).normalize();
     const cbDist = cbBase.distanceTo(cbTarget);
 
-    parts.cbCylinder.position.copy(cbBase.clone().add(cbDir.clone().multiplyScalar(cbDist * 0.35)));
-    parts.cbCylinder.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), cbDir);
+    if (cbDist > 1e-3) {
+      parts.cbCylinder.position.copy(cbBase.clone().add(cbDir.clone().multiplyScalar(cbDist * 0.35)));
+      safeSetFromUnitVectors(parts.cbCylinder.quaternion, new THREE.Vector3(0, 1, 0), cbDir);
 
-    parts.cbRod.position.copy(cbBase.clone().add(cbDir.clone().multiplyScalar(cbDist * 0.72)));
-    parts.cbRod.quaternion.copy(parts.cbCylinder.quaternion);
+      parts.cbRod.position.copy(cbBase.clone().add(cbDir.clone().multiplyScalar(cbDist * 0.72)));
+      parts.cbRod.quaternion.copy(parts.cbCylinder.quaternion);
+    }
 
     // 4. Elbow Hub & Wire Feeder (Axis 3 at pJ3)
     parts.elbowGroup.position.copy(pJ3);
-    const elbowDirZ = new THREE.Vector3(-Math.sin(a1Rad), 0, -Math.cos(a1Rad));
-    parts.elbowMotor.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), elbowDirZ);
-    parts.elbowCap.quaternion.copy(parts.elbowMotor.quaternion);
-    parts.feederGroup.rotation.y = -a1Rad;
+    parts.elbowGroup.rotation.y = -a1Rad;
 
     // 5. Link 2: Forearm (from pJ3 to pJ4)
     const arm2Mid = new THREE.Vector3().addVectors(pJ3, pJ4).multiplyScalar(0.5);
     const arm2Dir = new THREE.Vector3().subVectors(pJ4, pJ3).normalize();
     parts.forearmGroup.position.copy(arm2Mid);
-    parts.forearmGroup.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), arm2Dir);
+    safeSetFromUnitVectors(parts.forearmGroup.quaternion, new THREE.Vector3(0, 1, 0), arm2Dir);
 
     // 6. Hollow Wrist (at pJ4) & Torch pointing DOWNWARDS at pTCP
     parts.wristHub.position.copy(pJ4);
@@ -1068,13 +1089,13 @@ export default function ThreeViewport({
       const ring = parts.rubberRings[r];
       const rPos = pJ4.clone().add(toolDir.clone().multiplyScalar((r + 1) * 9.5));
       ring.position.copy(rPos);
-      ring.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), toolDir);
+      safeSetFromUnitVectors(ring.quaternion, new THREE.Vector3(0, 0, 1), toolDir);
     }
 
     // Flange, Collision Shock Sensor & Torch Neck
     const flangePos = pJ4.clone().add(toolDir.clone().multiplyScalar(58));
     parts.flange.position.copy(flangePos);
-    parts.flange.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), toolDir);
+    safeSetFromUnitVectors(parts.flange.quaternion, new THREE.Vector3(0, 1, 0), toolDir);
 
     const sensorPos = pJ4.clone().add(toolDir.clone().multiplyScalar(70));
     parts.shockSensor.position.copy(sensorPos);
@@ -1086,10 +1107,15 @@ export default function ThreeViewport({
 
     const torchMid = new THREE.Vector3().addVectors(clampPos, pTCP).multiplyScalar(0.5);
     parts.torch.position.copy(torchMid);
-    parts.torch.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), toolDir);
+    safeSetFromUnitVectors(parts.torch.quaternion, new THREE.Vector3(0, 1, 0), toolDir);
 
-    // Cooling Lines Offset
-    const sideVec = new THREE.Vector3(0, 1, 0).cross(toolDir).normalize().multiplyScalar(7);
+    // Cooling Lines Offset (Never produces NaN)
+    let sideVec = new THREE.Vector3(0, 0, 1).cross(toolDir);
+    if (sideVec.lengthSq() < 1e-4) {
+      sideVec = new THREE.Vector3(1, 0, 0).cross(toolDir);
+    }
+    sideVec.normalize().multiplyScalar(7);
+
     parts.hoseBlue.position.copy(torchMid.clone().add(sideVec));
     parts.hoseBlue.quaternion.copy(parts.torch.quaternion);
 
@@ -1098,11 +1124,11 @@ export default function ThreeViewport({
 
     // Gas Nozzle, Contact Tip & Wire Stickout
     parts.nozzle.position.copy(pTCP);
-    parts.nozzle.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), toolDir);
+    safeSetFromUnitVectors(parts.nozzle.quaternion, new THREE.Vector3(0, -1, 0), toolDir);
 
     const tipPos = pTCP.clone().add(toolDir.clone().multiplyScalar(5));
     parts.tip.position.copy(tipPos);
-    parts.tip.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), toolDir);
+    safeSetFromUnitVectors(parts.tip.quaternion, new THREE.Vector3(0, 1, 0), toolDir);
 
     const wirePos = pTCP.clone().add(toolDir.clone().multiplyScalar(12));
     parts.wireStickout.position.copy(wirePos);
@@ -1194,28 +1220,28 @@ export default function ThreeViewport({
     const arm1Mid = new THREE.Vector3().addVectors(pJ2, pJ3).multiplyScalar(0.5);
     const arm1Dir = new THREE.Vector3().subVectors(pJ3, pJ2).normalize();
     g.ghostUpperArm.position.copy(arm1Mid);
-    g.ghostUpperArm.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), arm1Dir);
+    safeSetFromUnitVectors(g.ghostUpperArm.quaternion, new THREE.Vector3(0, 1, 0), arm1Dir);
 
     g.ghostElbow.position.copy(pJ3);
 
     const arm2Mid = new THREE.Vector3().addVectors(pJ3, pJ4).multiplyScalar(0.5);
     const arm2Dir = new THREE.Vector3().subVectors(pJ4, pJ3).normalize();
     g.ghostForearm.position.copy(arm2Mid);
-    g.ghostForearm.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), arm2Dir);
+    safeSetFromUnitVectors(g.ghostForearm.quaternion, new THREE.Vector3(0, 1, 0), arm2Dir);
 
     g.ghostWrist.position.copy(pJ4);
 
     const toolDir = new THREE.Vector3().subVectors(pTCP, pJ4).normalize();
     const flangePos = pJ4.clone().add(toolDir.clone().multiplyScalar(58));
     g.ghostFlange.position.copy(flangePos);
-    g.ghostFlange.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), toolDir);
+    safeSetFromUnitVectors(g.ghostFlange.quaternion, new THREE.Vector3(0, 1, 0), toolDir);
 
     const torchMid = new THREE.Vector3().addVectors(pJ4, pTCP).multiplyScalar(0.5);
     g.ghostTorch.position.copy(torchMid);
-    g.ghostTorch.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), toolDir);
+    safeSetFromUnitVectors(g.ghostTorch.quaternion, new THREE.Vector3(0, 1, 0), toolDir);
 
     g.ghostNozzle.position.copy(pTCP);
-    g.ghostNozzle.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), toolDir);
+    safeSetFromUnitVectors(g.ghostNozzle.quaternion, new THREE.Vector3(0, -1, 0), toolDir);
   }, [isPreviewActive, targetJoints]);
 
   // Helper to format joints for HUD

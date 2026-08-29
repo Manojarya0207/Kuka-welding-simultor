@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Eye, AlertOctagon, RotateCcw, Sliders, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Play, Eye, AlertOctagon, RotateCcw, Sliders, CheckCircle2, RefreshCw } from 'lucide-react';
 
 const JOINT_LIMITS = {
   a1: { min: -185, max: 185, label: 'Turntable' },
@@ -34,6 +34,7 @@ export default function JointControlPanel({
   actualJoints,
   onTargetChange,
   onApplyPreset,
+  onSyncWithRobot,
   onPreviewToggle,
   isPreviewActive,
   onSendCommand,
@@ -87,7 +88,7 @@ export default function JointControlPanel({
         </div>
       </div>
 
-      {/* Quick Presets */}
+      {/* Quick Presets and Sync to Robot */}
       <div className="presets-bar">
         <span className="presets-label">Presets:</span>
         <div className="presets-buttons">
@@ -101,10 +102,20 @@ export default function JointControlPanel({
               {p.name}
             </button>
           ))}
+          {onSyncWithRobot && (
+            <button
+              onClick={onSyncWithRobot}
+              className="preset-btn sync-btn"
+              title="Snap all target sliders to match actual robot positions"
+            >
+              <RefreshCw size={11} className="inline mr-1" />
+              Sync to Robot
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Joint Sliders & Numeric Inputs */}
+      {/* Joint Sliders & Dual Numeric Inputs */}
       <div className="joint-grid">
         {Object.entries(JOINT_LIMITS).map(([axis, limit]) => {
           const targetVal = targetJoints[axis] ?? 0.0;
@@ -120,49 +131,49 @@ export default function JointControlPanel({
                 </div>
                 <div className="joint-values-display">
                   <span className="val-item actual">
-                    Actual: <strong>{actualVal.toFixed(2)} deg</strong>
+                    Actual: <strong>{Number(actualVal).toFixed(1)}°</strong>
                   </span>
                   <span className="val-item target">
-                    Target: <strong>{targetVal.toFixed(2)} deg</strong>
+                    Target: <strong>{Number(targetVal).toFixed(1)}°</strong>
                   </span>
                   {diff > 0.05 && (
                     <span className="val-diff">
-                      Delta: {diff.toFixed(2)} deg
+                      Delta: {diff.toFixed(1)}°
                     </span>
                   )}
                 </div>
               </div>
 
-              {/* Slider & Numeric Input */}
+              {/* Slider & Dual Readout / Input Controls */}
               <div className="joint-inputs-row">
+                <span className="limit-tag min">{limit.min}°</span>
                 <input
                   type="range"
                   min={limit.min}
                   max={limit.max}
-                  step="0.5"
+                  step="0.1"
                   value={targetVal}
                   onChange={(e) => handleSliderChange(axis, e.target.value)}
                   className="joint-range-slider"
                   disabled={isMoving}
                 />
+                <span className="limit-tag max">{limit.max}°</span>
+                <div className="val-box-actual" title="Actual live robot position">
+                  {Number(actualVal).toFixed(1)}°
+                </div>
                 <div className="numeric-input-wrapper">
                   <input
                     type="number"
                     min={limit.min}
                     max={limit.max}
-                    step="1"
-                    value={targetVal}
+                    step="0.5"
+                    value={Number(targetVal).toFixed(1)}
                     onChange={(e) => handleInputChange(axis, e.target.value)}
                     className="joint-number-field"
                     disabled={isMoving}
                   />
-                  <span className="unit-label">deg</span>
+                  <span className="unit-label">°</span>
                 </div>
-              </div>
-
-              <div className="joint-limit-footer">
-                <span>Min: {limit.min} deg</span>
-                <span>Max: {limit.max} deg</span>
               </div>
             </div>
           );
