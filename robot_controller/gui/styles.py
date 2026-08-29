@@ -1,27 +1,27 @@
 """
-Industrial KUKA dark theme styling and Qt Style Sheets (QSS) for PySide6 GUI.
+Industrial KUKA Light / White Theme Styling and Qt Style Sheets (QSS) for PySide6 GUI.
 """
 
-KUKA_ORANGE = "#ff5500"
-KUKA_ORANGE_HOVER = "#ff6e26"
-KUKA_ORANGE_ACTIVE = "#d94800"
+KUKA_ORANGE = "#ea580c"
+KUKA_ORANGE_HOVER = "#c2410c"
+KUKA_ORANGE_ACTIVE = "#9a3412"
 
-BG_DARK = "#0b0f19"
-BG_PANEL = "#131b2e"
-BG_CARD = "#1a243b"
-BG_INPUT = "#0d1322"
+BG_DARK = "#f8fafc"       # Soft off-white main window background
+BG_PANEL = "#ffffff"      # Pure white group boxes and panels
+BG_CARD = "#ffffff"       # Pure white cards
+BG_INPUT = "#ffffff"      # Clean white input fields
 
-BORDER_COLOR = "#2a3754"
-BORDER_FOCUS = "#ff5500"
+BORDER_COLOR = "#e2e8f0"  # Subtle slate border
+BORDER_FOCUS = "#ea580c"  # Focus border
 
-TEXT_PRIMARY = "#f8fafc"
-TEXT_SECONDARY = "#94a3b8"
-TEXT_MUTED = "#64748b"
+TEXT_PRIMARY = "#0f172a"   # Deep high-contrast dark slate
+TEXT_SECONDARY = "#334155" # Medium slate
+TEXT_MUTED = "#64748b"     # Muted slate
 
-COLOR_SUCCESS = "#22c55e"
-COLOR_DANGER = "#ef4444"
-COLOR_WARNING = "#f59e0b"
-COLOR_INFO = "#38bdf8"
+COLOR_SUCCESS = "#059669"
+COLOR_DANGER = "#dc2626"
+COLOR_WARNING = "#d97706"
+COLOR_INFO = "#0284c7"
 
 MAIN_STYLESHEET = f"""
 QMainWindow {{
@@ -36,21 +36,22 @@ QWidget {{
 }}
 
 QToolTip {{
-    background-color: {BG_CARD};
+    background-color: #ffffff;
     color: {TEXT_PRIMARY};
     border: 1px solid {BORDER_COLOR};
-    padding: 4px 8px;
-    border-radius: 4px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
 }}
 
 /* Panels and Group Boxes */
 QGroupBox {{
     background-color: {BG_PANEL};
     border: 1px solid {BORDER_COLOR};
-    border-radius: 8px;
-    margin-top: 18px;
-    padding: 16px 12px 12px 12px;
-    font-weight: 700;
+    border-radius: 10px;
+    margin-top: 20px;
+    padding: 20px 14px 14px 14px;
+    font-weight: 800;
     font-size: 13px;
     letter-spacing: 0.5px;
     color: {TEXT_PRIMARY};
@@ -59,25 +60,26 @@ QGroupBox {{
 QGroupBox::title {{
     subcontrol-origin: margin;
     subcontrol-position: top left;
-    left: 14px;
-    top: 2px;
-    padding: 0 8px;
-    background-color: {BG_PANEL};
+    left: 16px;
+    top: 4px;
+    padding: 2px 10px;
+    background-color: #ffffff;
     color: {KUKA_ORANGE};
-    border-radius: 3px;
+    border: 1px solid {BORDER_COLOR};
+    border-radius: 4px;
 }}
 
 /* Sliders */
 QSlider::groove:horizontal {{
-    border: 1px solid {BORDER_COLOR};
-    height: 8px;
-    background: {BG_INPUT};
-    border-radius: 4px;
+    border: none;
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 3px;
 }}
 
 QSlider::sub-page:horizontal {{
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 {KUKA_ORANGE_ACTIVE}, stop:1 {KUKA_ORANGE});
-    border-radius: 4px;
+    background: {KUKA_ORANGE};
+    border-radius: 3px;
 }}
 
 QSlider::handle:horizontal {{
@@ -91,81 +93,79 @@ QSlider::handle:horizontal {{
 }}
 
 QSlider::handle:horizontal:hover {{
-    background: #fff3ed;
+    background: #fff7ed;
     border: 2px solid {KUKA_ORANGE_HOVER};
-    transform: scale(1.1);
 }}
 
 /* SpinBoxes */
 QDoubleSpinBox {{
-    background-color: {BG_INPUT};
+    background-color: #ffffff;
     border: 1px solid {BORDER_COLOR};
     border-radius: 6px;
     padding: 5px 8px;
-    font-family: "SF Mono", "Menlo", "Consolas", monospace;
+    font-family: "JetBrains Mono", "SF Mono", "Menlo", "Consolas", monospace;
     font-size: 13px;
-    font-weight: 600;
-    color: #38bdf8;
+    font-weight: 700;
+    color: #0284c7;
     selection-background-color: {KUKA_ORANGE};
 }}
 
 QDoubleSpinBox:focus {{
     border: 1px solid {BORDER_FOCUS};
-    background-color: #101827;
+    background-color: #ffffff;
 }}
 
 QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {{
-    background-color: {BG_CARD};
+    background-color: #f1f5f9;
     border: none;
     width: 18px;
-    border-radius: 3px;
+    border-radius: 2px;
 }}
 
 QDoubleSpinBox::up-button:hover, QDoubleSpinBox::down-button:hover {{
-    background-color: {BORDER_COLOR};
+    background-color: #e2e8f0;
 }}
 
 /* Buttons */
 QPushButton {{
-    background-color: {BG_CARD};
+    background-color: #ffffff;
     color: {TEXT_PRIMARY};
     border: 1px solid {BORDER_COLOR};
     border-radius: 6px;
     padding: 8px 16px;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 12px;
     letter-spacing: 0.5px;
 }}
 
 QPushButton:hover {{
-    background-color: #243252;
-    border-color: #3b4e75;
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
 }}
 
 QPushButton:pressed {{
-    background-color: #1a253d;
+    background-color: #f1f5f9;
 }}
 
 QPushButton:disabled {{
-    background-color: #161e2e;
+    background-color: #f8fafc;
     color: {TEXT_MUTED};
-    border-color: #1e293b;
+    border-color: #e2e8f0;
 }}
 
 /* Primary Send Button */
 QPushButton#btnSendPrimary {{
     background-color: {KUKA_ORANGE};
     color: #ffffff;
-    border: 1px solid #ff772e;
+    border: none;
     font-size: 13px;
-    font-weight: 700;
+    font-weight: 800;
     padding: 10px 20px;
     border-radius: 6px;
 }}
 
 QPushButton#btnSendPrimary:hover {{
     background-color: {KUKA_ORANGE_HOVER};
-    border-color: #ffa16b;
 }}
 
 QPushButton#btnSendPrimary:pressed {{
@@ -174,30 +174,30 @@ QPushButton#btnSendPrimary:pressed {{
 
 /* Action Connect Button */
 QPushButton#btnConnect {{
-    background-color: #065f46;
-    color: #a7f3d0;
-    border: 1px solid #059669;
+    background-color: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
 }}
 
 QPushButton#btnConnect:hover {{
-    background-color: #047857;
+    background-color: #d1fae5;
 }}
 
 QPushButton#btnDisconnect {{
-    background-color: #7f1d1d;
-    color: #fecaca;
-    border: 1px solid #dc2626;
+    background-color: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
 }}
 
 QPushButton#btnDisconnect:hover {{
-    background-color: #991b1b;
+    background-color: #fee2e2;
 }}
 
 /* Stream Toggle Button */
 QPushButton#btnStreamActive {{
-    background-color: #9a3412;
-    color: #ffedd5;
-    border: 1px solid #ea580c;
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
     font-weight: 700;
 }}
 

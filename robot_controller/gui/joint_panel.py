@@ -42,15 +42,15 @@ class JointAxisRow(QFrame):
         self.setObjectName("jointRowFrame")
         self.setStyleSheet("""
             QFrame#jointRowFrame {
-                background-color: #151e33;
-                border: 1px solid #25334d;
+                background-color: #ffffff;
+                border: 1px solid #e2e8f0;
                 border-radius: 8px;
                 padding: 6px 12px;
                 margin-bottom: 6px;
             }
             QFrame#jointRowFrame:hover {
-                border-color: #3b4e75;
-                background-color: #18233b;
+                border-color: #cbd5e1;
+                background-color: #f8fafc;
             }
         """)
 
@@ -66,12 +66,12 @@ class JointAxisRow(QFrame):
         self.lbl_axis.setFixedWidth(42)
         self.lbl_axis.setStyleSheet("""
             QLabel {
-                color: #ff5500;
+                color: #ea580c;
                 font-family: "SF Mono", "Menlo", "Consolas", monospace;
-                font-size: 15px;
+                font-size: 14px;
                 font-weight: 800;
-                background-color: #241410;
-                border: 1px solid #7c2d12;
+                background-color: #fff7ed;
+                border: 1px solid #fdba74;
                 border-radius: 4px;
                 padding: 4px;
                 qproperty-alignment: AlignCenter;
@@ -117,12 +117,12 @@ class JointAxisRow(QFrame):
         self.lbl_current.setFixedWidth(70)
         self.lbl_current.setStyleSheet("""
             QLabel {
-                color: #38bdf8;
+                color: #0284c7;
                 font-family: "SF Mono", "Menlo", monospace;
                 font-size: 13px;
                 font-weight: 700;
-                background-color: #0b1528;
-                border: 1px solid #1e3a5f;
+                background-color: #f0f9ff;
+                border: 1px solid #bae6fd;
                 border-radius: 4px;
                 padding: 4px 6px;
                 qproperty-alignment: AlignCenter;

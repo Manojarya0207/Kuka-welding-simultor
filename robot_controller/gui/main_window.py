@@ -77,8 +77,8 @@ class MainWindow(QMainWindow):
         header_frame = QFrame()
         header_frame.setStyleSheet("""
             QFrame {
-                background-color: #101726;
-                border: 1px solid #1e2a44;
+                background-color: #ffffff;
+                border: 1px solid #e2e8f0;
                 border-radius: 8px;
                 padding: 10px 16px;
             }
@@ -95,7 +95,7 @@ class MainWindow(QMainWindow):
         lbl_kuka_icon.setStyleSheet(f"""
             QLabel {{
                 background-color: {KUKA_ORANGE};
-                color: #0b0f19;
+                color: #ffffff;
                 font-family: "Arial Black", sans-serif;
                 font-size: 22px;
                 font-weight: 900;
@@ -110,7 +110,7 @@ class MainWindow(QMainWindow):
         lbl_main_title = QLabel("KUKA ROBOT CONTROLLER")
         lbl_main_title.setStyleSheet("""
             QLabel {
-                color: #ffffff;
+                color: #0f172a;
                 font-size: 17px;
                 font-weight: 800;
                 letter-spacing: 1.5px;
@@ -151,8 +151,8 @@ class MainWindow(QMainWindow):
         self.conn_frame = QFrame()
         self.conn_frame.setStyleSheet("""
             QFrame {
-                background-color: #131d31;
-                border: 1px solid #202d4a;
+                background-color: #ffffff;
+                border: 1px solid #e2e8f0;
                 border-radius: 6px;
                 padding: 6px 12px;
             }
@@ -161,7 +161,7 @@ class MainWindow(QMainWindow):
         conn_lay.setContentsMargins(6, 4, 6, 4)
         self.lbl_conn_title = QLabel("Connection Status:")
         self.lbl_conn_title.setStyleSheet(f"color: {TEXT_SECONDARY}; font-weight: 600; font-size: 12px;")
-        self.lbl_conn_status = QLabel("● DISCONNECTED")
+        self.lbl_conn_status = QLabel("[DISCONNECTED]")
         self.lbl_conn_status.setStyleSheet(f"color: {COLOR_DANGER}; font-weight: 800; font-size: 12px;")
         conn_lay.addWidget(self.lbl_conn_title)
         conn_lay.addWidget(self.lbl_conn_status)
@@ -171,8 +171,8 @@ class MainWindow(QMainWindow):
         self.sim_frame = QFrame()
         self.sim_frame.setStyleSheet("""
             QFrame {
-                background-color: #131d31;
-                border: 1px solid #202d4a;
+                background-color: #ffffff;
+                border: 1px solid #e2e8f0;
                 border-radius: 6px;
                 padding: 6px 12px;
             }
@@ -181,7 +181,7 @@ class MainWindow(QMainWindow):
         sim_lay.setContentsMargins(6, 4, 6, 4)
         self.lbl_sim_title = QLabel("Simulator Status:")
         self.lbl_sim_title.setStyleSheet(f"color: {TEXT_SECONDARY}; font-weight: 600; font-size: 12px;")
-        self.lbl_sim_status = QLabel("● WAITING FOR DATA")
+        self.lbl_sim_status = QLabel("[WAITING FOR DATA]")
         self.lbl_sim_status.setStyleSheet(f"color: {COLOR_WARNING}; font-weight: 800; font-size: 12px;")
         sim_lay.addWidget(self.lbl_sim_title)
         sim_lay.addWidget(self.lbl_sim_status)
@@ -191,8 +191,8 @@ class MainWindow(QMainWindow):
         self.stream_frame = QFrame()
         self.stream_frame.setStyleSheet("""
             QFrame {
-                background-color: #131d31;
-                border: 1px solid #202d4a;
+                background-color: #ffffff;
+                border: 1px solid #e2e8f0;
                 border-radius: 6px;
                 padding: 6px 12px;
             }
@@ -202,7 +202,7 @@ class MainWindow(QMainWindow):
         self.lbl_stream_indicator = QLabel("STREAM IDLE")
         self.lbl_stream_indicator.setStyleSheet(f"color: {TEXT_MUTED}; font-weight: 700; font-size: 12px;")
         self.lbl_packet_counter = QLabel("Packets Sent: 0")
-        self.lbl_packet_counter.setStyleSheet("color: #38bdf8; font-family: monospace; font-weight: 700;")
+        self.lbl_packet_counter.setStyleSheet("color: #0284c7; font-family: monospace; font-weight: 700;")
         stream_lay.addWidget(self.lbl_stream_indicator)
         stream_lay.addWidget(self.lbl_packet_counter)
         status_bar.addWidget(self.stream_frame)
@@ -216,8 +216,8 @@ class MainWindow(QMainWindow):
         self.error_banner.setVisible(False)
         self.error_banner.setStyleSheet("""
             QFrame {
-                background-color: #450a0a;
-                border: 1px solid #dc2626;
+                background-color: #fef2f2;
+                border: 1px solid #fecaca;
                 border-radius: 6px;
                 padding: 8px 12px;
             }
@@ -225,11 +225,11 @@ class MainWindow(QMainWindow):
         err_lay = QHBoxLayout(self.error_banner)
         err_lay.setContentsMargins(6, 4, 6, 4)
         self.lbl_error_msg = QLabel("")
-        self.lbl_error_msg.setStyleSheet("color: #fecaca; font-weight: 700; font-size: 12px;")
+        self.lbl_error_msg.setStyleSheet("color: #b91c1c; font-weight: 700; font-size: 12px;")
         err_lay.addWidget(self.lbl_error_msg)
-        btn_dismiss = QPushButton("✕")
+        btn_dismiss = QPushButton("[X]")
         btn_dismiss.setFixedSize(24, 24)
-        btn_dismiss.setStyleSheet("background: transparent; color: #fca5a5; font-weight: bold; border: none;")
+        btn_dismiss.setStyleSheet("background: transparent; color: #dc2626; font-weight: bold; border: none;")
         btn_dismiss.clicked.connect(lambda: self.error_banner.setVisible(False))
         err_lay.addWidget(btn_dismiss)
         root_layout.addWidget(self.error_banner)
@@ -287,7 +287,7 @@ class MainWindow(QMainWindow):
         # Start / Stop Stream
         self.btn_stream = QPushButton("START STREAM")
         self.btn_stream.setMinimumHeight(42)
-        self.btn_stream.setStyleSheet("background-color: #1e3a8a; color: #bfdbfe; border: 1px solid #3b82f6;")
+        self.btn_stream.setStyleSheet("background-color: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-weight: 700;")
         self.btn_stream.clicked.connect(self._toggle_stream)
         btn_strip.addWidget(self.btn_stream, stretch=1)
 
@@ -306,8 +306,8 @@ class MainWindow(QMainWindow):
             card = QFrame()
             card.setStyleSheet("""
                 QFrame {
-                    background-color: #0d1424;
-                    border: 1px solid #1f2c45;
+                    background-color: #ffffff;
+                    border: 1px solid #e2e8f0;
                     border-radius: 6px;
                     padding: 6px;
                 }
@@ -321,7 +321,7 @@ class MainWindow(QMainWindow):
             card_lay.addWidget(lbl_ax)
 
             lbl_val = QLabel(f"{DEFAULT_JOINTS[ax_id]:.1f}°")
-            lbl_val.setStyleSheet("color: #38bdf8; font-family: monospace; font-weight: 700; font-size: 13px; qproperty-alignment: AlignCenter;")
+            lbl_val.setStyleSheet("color: #0284c7; font-family: monospace; font-weight: 700; font-size: 13px; qproperty-alignment: AlignCenter;")
             card_lay.addWidget(lbl_val)
 
             self.last_sent_labels[ax_id] = lbl_val
@@ -360,13 +360,13 @@ class MainWindow(QMainWindow):
     def _update_connection_ui(self, connected: bool):
         self.is_connected = connected
         if connected:
-            self.lbl_conn_status.setText("● CONNECTED")
+            self.lbl_conn_status.setText("[CONNECTED]")
             self.lbl_conn_status.setStyleSheet(f"color: {COLOR_SUCCESS}; font-weight: 800; font-size: 12px;")
             self.btn_connect.setEnabled(False)
             self.btn_disconnect.setEnabled(True)
             self._clear_error()
         else:
-            self.lbl_conn_status.setText("● DISCONNECTED")
+            self.lbl_conn_status.setText("[DISCONNECTED]")
             self.lbl_conn_status.setStyleSheet(f"color: {COLOR_DANGER}; font-weight: 800; font-size: 12px;")
             self.btn_connect.setEnabled(True)
             self.btn_disconnect.setEnabled(False)
@@ -388,8 +388,8 @@ class MainWindow(QMainWindow):
 
     def _on_joint_changed(self, axis_id: str, value: float):
         # Simulator status set to pending send
-        if self.lbl_sim_status.text() != "● WAITING FOR DATA" and not self.is_streaming:
-            self.lbl_sim_status.setText("● WAITING FOR DATA")
+        if self.lbl_sim_status.text() != "[WAITING FOR DATA]" and not self.is_streaming:
+            self.lbl_sim_status.setText("[WAITING FOR DATA]")
             self.lbl_sim_status.setStyleSheet(f"color: {COLOR_WARNING}; font-weight: 800; font-size: 12px;")
 
     def _on_send_clicked(self):
@@ -407,11 +407,11 @@ class MainWindow(QMainWindow):
                 if ax_id in self.last_sent_labels:
                     self.last_sent_labels[ax_id].setText(f"{val:.1f}°")
 
-            self.lbl_sim_status.setText("● DATA SENT")
+            self.lbl_sim_status.setText("[DATA SENT]")
             self.lbl_sim_status.setStyleSheet(f"color: {COLOR_SUCCESS}; font-weight: 800; font-size: 12px;")
             return True
         else:
-            self.lbl_sim_status.setText("● TRANSMISSION FAILED")
+            self.lbl_sim_status.setText("[TRANSMISSION FAILED]")
             self.lbl_sim_status.setStyleSheet(f"color: {COLOR_DANGER}; font-weight: 800; font-size: 12px;")
             self._show_error(msg)
             return False
@@ -422,7 +422,7 @@ class MainWindow(QMainWindow):
             if ax_id in self.joint_rows:
                 self.joint_rows[ax_id].set_value(def_val)
 
-        self.lbl_sim_status.setText("● WAITING FOR DATA")
+        self.lbl_sim_status.setText("[WAITING FOR DATA]")
         self.lbl_sim_status.setStyleSheet(f"color: {COLOR_WARNING}; font-weight: 800; font-size: 12px;")
         logger.info("Reset joint positions to defaults.")
 
@@ -435,7 +435,7 @@ class MainWindow(QMainWindow):
             rand_val = min_lim + span * random.random()
             row.set_value(round(rand_val, 1))
 
-        self.lbl_sim_status.setText("● WAITING FOR DATA")
+        self.lbl_sim_status.setText("[WAITING FOR DATA]")
         self.lbl_sim_status.setStyleSheet(f"color: {COLOR_WARNING}; font-weight: 800; font-size: 12px;")
         logger.info("Generated random test angles.")
 
@@ -444,15 +444,15 @@ class MainWindow(QMainWindow):
         if not self.is_streaming:
             self.is_streaming = True
             self.btn_stream.setText("STOP STREAM")
-            self.btn_stream.setStyleSheet("background-color: #7f1d1d; color: #fecaca; border: 1px solid #dc2626; font-weight: 700;")
-            self.lbl_stream_indicator.setText("STREAMING ●")
+            self.btn_stream.setStyleSheet("background-color: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; font-weight: 700;")
+            self.lbl_stream_indicator.setText("[STREAMING]")
             self.lbl_stream_indicator.setStyleSheet(f"color: {COLOR_SUCCESS}; font-weight: 800; font-size: 12px;")
             self.stream_timer.start()
             logger.info("Started real-time data stream simulation.")
         else:
             self.is_streaming = False
             self.btn_stream.setText("START STREAM")
-            self.btn_stream.setStyleSheet("background-color: #1e3a8a; color: #bfdbfe; border: 1px solid #3b82f6;")
+            self.btn_stream.setStyleSheet("background-color: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-weight: 700;")
             self.lbl_stream_indicator.setText("STREAM IDLE")
             self.lbl_stream_indicator.setStyleSheet(f"color: {TEXT_MUTED}; font-weight: 700; font-size: 12px;")
             self.stream_timer.stop()
