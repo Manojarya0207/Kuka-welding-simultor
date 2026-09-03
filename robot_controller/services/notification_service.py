@@ -31,9 +31,8 @@ class NotificationService:
         self.ws_broadcaster = broadcaster
 
     def _next_event_id(self) -> str:
-        import time
-        eid = f"EVT-{int(time.time()*1000)%100000000:08d}"
-        return eid
+        import uuid
+        return f"EVT-{uuid.uuid4().hex[:10].upper()}"
 
     async def emit_notification(
         self,

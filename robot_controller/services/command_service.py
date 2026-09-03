@@ -72,7 +72,8 @@ class CommandService:
                             cmd.error_message = pl["error_message"]
 
                     # Add event record
-                    evt_id = f"EVT-CMD-{int(time.time()*1000)%1000000:06d}"
+                    import uuid
+                    evt_id = f"EVT-CMD-{uuid.uuid4().hex[:10].upper()}"
                     evt = CommandEvent(
                         event_id=evt_id,
                         command_id=command_id,
@@ -89,7 +90,7 @@ class CommandService:
         # 2. Broadcast command_update event over WebSocket
         if self.ws_broadcaster:
             update_msg = {
-                "event_id": f"EVT-UP-{int(time.time()*1000)%1000000:06d}",
+                "event_id": f"EVT-UP-{uuid.uuid4().hex[:10].upper()}",
                 "type": "command_update",
                 "command_id": command_id,
                 "status": status,

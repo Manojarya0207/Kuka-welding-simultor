@@ -6,7 +6,7 @@ Uses SQLite for persistent storage without requiring external daemons.
 import os
 from contextlib import contextmanager
 from typing import Generator
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker, Session
 
 from database.models import Base, Robot
@@ -15,11 +15,20 @@ DB_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(DB_DIR, "kuka_robot.db")
 DATABASE_URL = f"sqlite:///{DB_PATH}"
 
-# Connect args needed for SQLite concurrency with threads
+# Connect args needed for SQLite concurrency with threads and processes
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"check_same_thread": False}
+    connect_args={"check_same_thread": False, "timeout": 30}
 )
+
+
+@event.listens_for(engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.execute("PRAGMA synchronous=NORMAL")
+    cursor.close()
+
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
